@@ -3,21 +3,20 @@ Author: Qiuhong Chen
 Date Created: 2024/11/4
 
 Description:
-1. Standard AES128 encryption, 10 rounds
-2. It is NOT fast AES (T-tables no used)
-2. Serial implementation
+- Standard AES128 + fast AES128 (T-table)
+- 10 rounds, serial
 
 Reference:
 - https://ieeexplore.ieee.org/document/8252225
 - https://arxiv.org/abs/1902.05234
-- https://legacy.cryptool.org/en/cto/aes-step-by-step
+- https://legacy.cryptool.org/en/cto/aes-step-by-step (for standard AES)
 */
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstring>
-#include "aes128.h"
+#include "AES128.h"
 
 #define ROUND_SIZE 10 // 10 rounds of encryption
 #define BLOCK_SIZE 16 // 16 bytes for AES128
@@ -32,26 +31,20 @@ void print_text_hex(uchar text[], uint len)
 }
 
 /*
-Key & block are both 16 bytes, row-major stored
+Key & block are both 16 bytes
+Assume column-major stored
+[0 4 8 12]
+[1 5 9 13]
+[2 6 10 14]
+[3 7 11 15]
 */
-class AES128_Serial
+class AES128_serial
 {
-private:
+protected:
     uchar key[BLOCK_SIZE * (ROUND_SIZE + 1)];
     const uchar rcon[ROUND_SIZE] = {
         0x01, 0x02, 0x04, 0x08, 0x10,
         0x20, 0x40, 0x80, 0x1b, 0x36};
-    // for mix_columns
-    const uchar M[BLOCK_SIZE] = {
-        0x02, 0x03, 0x01, 0x01,
-        0x01, 0x02, 0x03, 0x01,
-        0x01, 0x01, 0x02, 0x03,
-        0x03, 0x01, 0x01, 0x02};
-    const uchar inv_M[BLOCK_SIZE] = {
-        0x0e, 0x0b, 0x0d, 0x09,
-        0x09, 0x0e, 0x0b, 0x0d,
-        0x0d, 0x09, 0x0e, 0x0b,
-        0x0b, 0x0d, 0x09, 0x0e};
 
     void key_expansion()
     {
@@ -79,39 +72,29 @@ private:
         }
     }
 
-    /*
-     ========================Galois Field========================
-    */
+public:
+    virtual void encrypt(uchar input[], uchar output[], int len) = 0;
+    virtual void decrypt(uchar input[], uchar output[], int len) = 0;
+};
 
-    /*
-    GF(2^8) multiplication
-    GF(2^8) has multiple primitive polynomials
-    x^8 + x^4 + x^3 + x + 1 is chosen here
-    Calculator http://www.ee.unb.ca/cgi-bin/tervo/calc2.pl
-    */
-    uchar gfmul(uchar a, uchar b)
-    {
-        uchar p = 0;
-        bool hi_bit_set;
-        for (int i = 0; i < 8; i++)
-        {
-            // add (2^i)*a to p
-            if (b & 1)
-            {
-                p ^= a;
-            }
-            // calculate (2^(i+1))*a
-            // *2 = *(00000010) equals: left shift 1, x^8 = x^4 + x^3 + x + 1
-            hi_bit_set = (a & 0x80);
-            a <<= 1;
-            if (hi_bit_set)
-            {
-                a ^= 0x1b;
-            }
-            b >>= 1;
-        }
-        return p;
-    }
+/*
+4 steps:
+addRoundKey, substituteBytes, permutation, multiplication
+*/
+class AES128_serial_standard : public AES128_serial
+{
+protected:
+    // for mix_columns
+    const uchar M[BLOCK_SIZE] = {
+        0x02, 0x03, 0x01, 0x01,
+        0x01, 0x02, 0x03, 0x01,
+        0x01, 0x01, 0x02, 0x03,
+        0x03, 0x01, 0x01, 0x02};
+    const uchar inv_M[BLOCK_SIZE] = {
+        0x0e, 0x0b, 0x0d, 0x09,
+        0x09, 0x0e, 0x0b, 0x0d,
+        0x0d, 0x09, 0x0e, 0x0b,
+        0x0b, 0x0d, 0x09, 0x0e};
 
     /*
     ========================encryption========================
@@ -155,13 +138,13 @@ private:
 #endif
     }
 
-    void aes_2_permutation(uchar state[BLOCK_SIZE]) // (行移位)
+    void aes_2_permutation(uchar state[BLOCK_SIZE]) // shift row (行移位)
     {
         uchar state_t[BLOCK_SIZE];
         memcpy(state_t, state, BLOCK_SIZE);
-        for (int i = 0; i < 4; i++) // each row
+        for (int i = 0; i < 4; i++) // each column
         {
-            for (int j = 0; j < 4; j++) // each column
+            for (int j = 0; j < 4; j++) // each row
             {
                 state[i * 4 + j] = state_t[((i + j) % 4) * 4 + j];
             }
@@ -172,16 +155,16 @@ private:
 #endif
     }
 
-    void aes_3_multiplication(uchar state[BLOCK_SIZE]) // (列混合)
+    void aes_3_multiplication(uchar state[BLOCK_SIZE]) // mix columns (列混合)
     {
         uchar state_t[BLOCK_SIZE];
         memcpy(state_t, state, BLOCK_SIZE);
         // state = M * Transpose(state_t);
-        for (int i = 0; i < 4; i++) // each row
+        for (int i = 0; i < 4; i++) // each column
         {
-            for (int j = 0; j < 4; j++) // each column
+            for (int j = 0; j < 4; j++) // each row
             {
-                // state[i * 4 + j] = row i of state_t * row j of M
+                // state[i * 4 + j] =  row j of M * column i of state_t
                 state[i * 4 + j] = gfmul(M[j * 4], state_t[i * 4]) ^ gfmul(M[j * 4 + 1], state_t[i * 4 + 1]) ^ gfmul(M[j * 4 + 2], state_t[i * 4 + 2]) ^ gfmul(M[j * 4 + 3], state_t[i * 4 + 3]);
             }
         }
@@ -283,7 +266,7 @@ private:
     }
 
 public:
-    AES128_Serial(std::string key)
+    AES128_serial_standard(std::string key)
     {
         if (key.size() != BLOCK_SIZE)
         {
@@ -298,7 +281,7 @@ public:
 #endif
     }
 
-    void encrypt(uchar input[], uchar output[], int len)
+    virtual void encrypt(uchar input[], uchar output[], int len)
     {
         if (len % BLOCK_SIZE != 0)
         {
@@ -311,7 +294,7 @@ public:
         }
     }
 
-    void decrypt(uchar input[], uchar output[], int len)
+    virtual void decrypt(uchar input[], uchar output[], int len)
     {
         if (len % BLOCK_SIZE != 0)
         {
@@ -323,4 +306,11 @@ public:
             decrypt_block(input + i, output + i);
         }
     }
+};
+
+/*
+4 T-tables
+*/
+class AES128_fast : public AES128_serial
+{
 };
