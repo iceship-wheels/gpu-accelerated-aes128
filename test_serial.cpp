@@ -5,12 +5,15 @@ Date Created: 2024/11/4
 
 #include <iostream>
 #include "AES_Serial.h"
+#include "AES128.h"
 using namespace std;
 
 int main()
 {
     AES128_serial *cipher;
+
     // verify_tbox();
+
     // standard AES128
     cipher = new AES128_serial_standard("1234567890123456");
     char plain_text[17] = "abcdefghijklmnop";
