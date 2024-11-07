@@ -10,22 +10,35 @@ using namespace std;
 
 int main()
 {
-    AES128_serial *cipher;
+    verify_tbox();
 
-    // verify_tbox();
+    AES128_Serial *cipher;
 
-    // standard AES128
-    cipher = new AES128_serial_standard("1234567890123456");
     char plain_text[17] = "abcdefghijklmnop";
     char cipher_text[17];
     char plain_text_dec[17];
-    print_text_hex((uchar *)plain_text, 16);
+
+    // standard AES128
+    cout << endl
+         << "=======standard AES128=======" << endl;
+    cipher = new AES128_Serial_Std("1234567890123456");
+    print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt((uchar *)plain_text, (uchar *)cipher_text, 16);
-    print_text_hex((uchar *)cipher_text, 16);
+    print_byte_hex((uchar *)cipher_text, 16);
     cipher->decrypt((uchar *)cipher_text, (uchar *)plain_text_dec, 16);
-    print_text_hex((uchar *)plain_text_dec, 16);
+    print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
+
     // fast AES128
+    cout << endl
+         << "=======fast AES128=======" << endl;
+    cipher = new AES128_Serial_Fast("1234567890123456");
+    print_byte_hex((uchar *)plain_text, 16);
+    cipher->encrypt((uchar *)plain_text, (uchar *)cipher_text, 16);
+    print_byte_hex((uchar *)cipher_text, 16);
+    cipher->decrypt((uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    print_byte_hex((uchar *)plain_text_dec, 16);
+    delete cipher;
 
     return 0;
 }
