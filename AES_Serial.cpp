@@ -48,6 +48,9 @@ Assume column-major stored
 */
 #pragma region AES128_serial
 
+/*
+ECB block cipher mode (cipher is applied directly and indepentently to each block)
+*/
 void AES128_Serial::encrypt(uchar input[], uchar output[], int len)
 {
     if (len % BLOCK_STATES != 0)
@@ -77,7 +80,7 @@ void AES128_Serial::decrypt(uchar input[], uchar output[], int len)
 #pragma endregion
 
 /*
-4 steps:
+4 steps involved in standard AES encryption:
 addRoundKey, substituteBytes, permutation, multiplication
 */
 #pragma region AES128_serial_standard
@@ -93,6 +96,9 @@ AES128_Serial_Std::AES128_Serial_Std(std::string key)
     key_expansion();
 }
 
+/*
+Expand the original key to ROUND_SIZE + 1 keys
+*/
 void AES128_Serial_Std::key_expansion()
 {
     uint32 w[4];
@@ -324,6 +330,9 @@ void AES128_Serial_Std::aes_inv_3_multiplication(uchar state[BLOCK_STATES])
 
 #pragma endregion AES128_serial_standard
 
+/*
+Fast AES128 use 4 T-tables.
+*/
 #pragma region AES128_serial_fast
 
 AES128_Serial_Fast::AES128_Serial_Fast(std::string key)
@@ -340,6 +349,9 @@ AES128_Serial_Fast::AES128_Serial_Fast(std::string key)
     key_expansion();
 }
 
+/*
+Besides round keys for encryption, also need a set of keys for decryption.
+*/
 void AES128_Serial_Fast::key_expansion()
 {
     uint32 w[4];

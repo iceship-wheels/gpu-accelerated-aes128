@@ -61,66 +61,6 @@ void verify_tbox()
         assert(inv_T3[i] == ((gfmul(inv_sbox[i], 0x09) << 24 | gfmul(inv_sbox[i], 0x0d) << 16 | gfmul(inv_sbox[i], 0x0b) << 8 | gfmul(inv_sbox[i], 0x0e))));
     }
     std::cout << "T-box verified." << std::endl;
-
-    // std::cout << "inv_T0[256] = {" << std::endl;
-    // for (int i = 0; i < 256; i++)
-    // {
-    //     if (i % 4 == 0)
-    //     {
-    //         std::cout << "    ";
-    //     }
-    //     std::cout << "0x" << std::hex << inv_T0[i] << ", ";
-    //     if (i % 4 == 3)
-    //     {
-    //         std::cout << std::endl;
-    //     }
-    // }
-    // std::cout << "}" << std::endl;
-
-    // std::cout << "inv_T1[256] = {" << std::endl;
-    // for (int i = 0; i < 256; i++)
-    // {
-    //     if (i % 4 == 0)
-    //     {
-    //         std::cout << "    ";
-    //     }
-    //     std::cout << "0x" << std::hex << inv_T1[i] << ", ";
-    //     if (i % 4 == 3)
-    //     {
-    //         std::cout << std::endl;
-    //     }
-    // }
-    // std::cout << "}" << std::endl;
-
-    // std::cout << "inv_T2[256] = {" << std::endl;
-    // for (int i = 0; i < 256; i++)
-    // {
-    //     if (i % 4 == 0)
-    //     {
-    //         std::cout << "    ";
-    //     }
-    //     std::cout << "0x" << std::hex << inv_T2[i] << ", ";
-    //     if (i % 4 == 3)
-    //     {
-    //         std::cout << std::endl;
-    //     }
-    // }
-    // std::cout << "}" << std::endl;
-
-    // std::cout << "inv_T3[256] = {" << std::endl;
-    // for (int i = 0; i < 256; i++)
-    // {
-    //     if (i % 4 == 0)
-    //     {
-    //         std::cout << "    ";
-    //     }
-    //     std::cout << "0x" << std::hex << inv_T3[i] << ", ";
-    //     if (i % 4 == 3)
-    //     {
-    //         std::cout << std::endl;
-    //     }
-    // }
-    // std::cout << "}" << std::endl;
 }
 
 /*

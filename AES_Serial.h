@@ -11,6 +11,7 @@ Date Created: 2024/11/4
 #define BLOCK_WORDS 4   // or 4 words in a block
 
 void print_byte_hex(uchar text[], uint len);
+void print_word_hex(uint32 text[], uint len);
 
 class AES128_Serial
 {
@@ -41,6 +42,7 @@ class AES128_Serial_Std : public AES128_Serial
 {
 protected:
     uchar key[BLOCK_STATES * (ROUND_SIZE + 1)];
+
     void key_expansion();
 
     /*
