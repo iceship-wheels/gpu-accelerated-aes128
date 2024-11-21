@@ -3,4 +3,4 @@ cd build
 cmake ..
 make
 cd ..
-./test_serial
+./test

@@ -5,6 +5,7 @@ Date Created: 2024/11/4
 
 #include <iostream>
 #include "AES_Serial.h"
+#include "AES_Parallel.h"
 #include "AES128.h"
 using namespace std;
 
