@@ -9,10 +9,8 @@ Date Created: 2024/11/4
 #include "AES128.h"
 using namespace std;
 
-int main()
+void test_serial()
 {
-    verify_tbox();
-
     AES128_Serial *cipher;
 
     char plain_text[17] = "abcdefghijklmnop";
@@ -40,6 +38,31 @@ int main()
     cipher->decrypt((uchar *)cipher_text, (uchar *)plain_text_dec, 16);
     print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
+}
+
+void test_parallel()
+{
+    AES128_Parallel *cipher;
+
+    char plain_text[17] = "abcdefghijklmnop";
+    char cipher_text[17];
+    char plain_text_dec[17];
+
+    // standard AES128
+    cout << endl
+         << "=======Parallel AES128=======" << endl;
+    cipher = new AES128_Parallel();
+    print_byte_hex((uchar *)plain_text, 16);
+    cipher->encrypt(32, 0, (uchar *)plain_text, (uchar *)cipher_text, 16);
+    print_byte_hex((uchar *)cipher_text, 16);
+    delete cipher;
+}
+
+int main()
+{
+    verify_tbox();
+    // test_serial();
+    test_parallel();
 
     return 0;
 }

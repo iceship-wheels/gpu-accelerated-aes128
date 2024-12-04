@@ -4,10 +4,11 @@ Date Created: 2024/11/4
 */
 
 #include <stdio.h>
+#include <iostream>
 #include "AES_Parallel.h"
 #define BLOCK_WORDS 4 // 4 words in a block
 
-__device__ void encrypt_block(char *input, char *output)
+__device__ void encrypt_block(uchar input[], uchar output[])
 {
     for (int i = 0; i < BLOCK_WORDS * 4; i++)
     {
@@ -15,7 +16,7 @@ __device__ void encrypt_block(char *input, char *output)
     }
 }
 
-__global__ void encrypt(char *input, char *output, int blocks_per_thread, int block_num)
+__global__ void encrypt_kernel(uchar input[], uchar output[], int blocks_per_thread, int block_num)
 {
     // global id
     int gid = blockIdx.x * (blockDim.x * blockDim.y) + threadIdx.y * blockDim.x + threadIdx.x;
@@ -33,7 +34,7 @@ __global__ void encrypt(char *input, char *output, int blocks_per_thread, int bl
 /*
 Wrapper function for kernal launch
 */
-void AES128_Parallel::encrypt(int threads, int round_key_position, char *input, char *output, int len)
+void AES128_Parallel::encrypt(int threads, int round_key_position, uchar input[], uchar output[], int len)
 {
     if (len % BLOCK_STATES != 0)
     {
@@ -41,10 +42,10 @@ void AES128_Parallel::encrypt(int threads, int round_key_position, char *input, 
         exit(1);
     }
 
-    int block_num = len / (BLOCK_WORDs * 4);
+    int block_num = len / (BLOCK_WORDS * 4);
     int blocks_per_thread = (block_num + threads - 1) / threads;
     dim3 dimBlock(32, 32, 1);
     dim3 dimGrid((threads + 1023) / 1024, 1, 1);
 
-    encrypt<<<dimGrid, dimBlock>>>(input, output, blocks_per_thread, block_num);
+    encrypt_kernel<<<dimGrid, dimBlock>>>(input, output, blocks_per_thread, block_num);
 }

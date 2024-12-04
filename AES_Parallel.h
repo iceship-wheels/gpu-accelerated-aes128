@@ -31,7 +31,7 @@ protected:
         0x20, 0x40, 0x80, 0x1b, 0x36};
 
 public:
-    void encrypt(int threads, int round_key_position, char *input, char *output, int len);
+    void encrypt(int threads, int round_key_position, uchar input[], uchar output[], int len);
 };
 
 #endif

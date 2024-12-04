@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.2)
-project (test CXX CUDA)
+project (test CUDA CXX)
 
 # libraries
 add_library(AES128 AES128.cpp)
 add_library(AES_Serial AES_Serial.cpp)
-add_library(AES_Parallel AES_Parallel.cpp)
+add_library(AES_Parallel AES_Parallel.cpp AES_Parallel_kernel.cu)
 target_link_libraries(AES_Serial AES128)
 target_link_libraries(AES_Parallel AES128)
 
