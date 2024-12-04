@@ -3,6 +3,8 @@ Author: Qiuhong Chen
 Date Created: 2024/11/4
 */
 
+#ifndef __AES_SERIAL_H__
+#define __AES_SERIAL_H__
 #include "AES128.h"
 
 // #define debug
@@ -82,3 +84,5 @@ protected:
 public:
     AES128_Serial_Fast(std::string key);
 };
+
+#endif
