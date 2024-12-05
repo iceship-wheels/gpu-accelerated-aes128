@@ -8,7 +8,7 @@ Date Created: 2024/11/4
 #include "AES_Parallel.h"
 #define BLOCK_WORDS 4 // 4 words in a block
 
-__device__ void print_word_hex(int *text, int len)
+__device__ void print_word_hex_device(int *text, int len)
 {
     for (int i = 0; i < len; i++)
     {
@@ -19,6 +19,10 @@ __device__ void print_word_hex(int *text, int len)
 
 __device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
 {
+#ifdef debug
+    printf("----Encryption----\n");
+#endif
+
     int w[BLOCK_WORDS];
     int w_new[BLOCK_WORDS];
 
@@ -35,7 +39,7 @@ __device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T
     w[3] ^= key[3];
 #ifdef debug
     printf("Round 0: ");
-    print_word_hex(w, BLOCK_WORDS);
+    print_word_hex_device(w, BLOCK_WORDS);
 #endif
 
     // round 1 to ROUND_SIZE-1
@@ -51,7 +55,7 @@ __device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T
         }
 #ifdef debug
         printf("Round %d: ", r);
-        print_word_hex(w, BLOCK_WORDS);
+        print_word_hex_device(w, BLOCK_WORDS);
 #endif
     }
     // round ROUND_SIZE: substituteBytes, shiftRows, addRoundKey (no mixColumns)
@@ -61,8 +65,7 @@ __device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T
     w_new[3] = (sbox[(w[3] >> 24) & 0xff] << 24) ^ (sbox[(w[0] >> 16) & 0xff] << 16) ^ (sbox[(w[1] >> 8) & 0xff] << 8) ^ sbox[w[2] & 0xff] ^ key[ROUND_SIZE * 4 + 3];
 #ifdef debug
     printf("Round %d: ", ROUND_SIZE);
-    print_word_hex(key + ROUND_SIZE * 4, BLOCK_WORDS);
-    print_word_hex(w_new, BLOCK_WORDS);
+    print_word_hex_device(w_new, BLOCK_WORDS);
 #endif
 
     // get output
@@ -70,7 +73,6 @@ __device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T
     output[1] = ((w_new[1] >> 24) & 0xff) | (((w_new[1] >> 16) & 0xff) << 8) | (((w_new[1] >> 8) & 0xff) << 16) | ((w_new[1] & 0xff) << 24);
     output[2] = ((w_new[2] >> 24) & 0xff) | (((w_new[2] >> 16) & 0xff) << 8) | (((w_new[2] >> 8) & 0xff) << 16) | ((w_new[2] & 0xff) << 24);
     output[3] = ((w_new[3] >> 24) & 0xff) | (((w_new[3] >> 16) & 0xff) << 8) | (((w_new[3] >> 8) & 0xff) << 16) | ((w_new[3] & 0xff) << 24);
-    print_word_hex(output, BLOCK_WORDS);
 }
 
 __global__ void encrypt_kernel(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
@@ -87,8 +89,83 @@ __global__ void encrypt_kernel(int *input, int *output, int blocks_per_thread, i
     // sbox: 256 bytes, store in register file
     for (int i = start_block; i < end_block; i++)
     {
-        printf("Thread %d, block %d\n", gid, i);
         encrypt_block(input + i * BLOCK_WORDS, output + i * BLOCK_WORDS, key, T0, T1, T2, T3, sbox);
+    }
+}
+
+__device__ void decrypt_block(int *input, int *output, int *key_dec, int *inv_T0, int *inv_T1, int *inv_T2, int *inv_T3, unsigned char *inv_sbox)
+{
+#ifdef debug
+    printf("----Decryption----\n");
+#endif
+
+    int w[BLOCK_WORDS];
+    int w_new[BLOCK_WORDS];
+
+    // get words from input
+    w[0] = ((input[0] >> 24) & 0xff) | (((input[0] >> 16) & 0xff) << 8) | (((input[0] >> 8) & 0xff) << 16) | ((input[0] & 0xff) << 24);
+    w[1] = ((input[1] >> 24) & 0xff) | (((input[1] >> 16) & 0xff) << 8) | (((input[1] >> 8) & 0xff) << 16) | ((input[1] & 0xff) << 24);
+    w[2] = ((input[2] >> 24) & 0xff) | (((input[2] >> 16) & 0xff) << 8) | (((input[2] >> 8) & 0xff) << 16) | ((input[2] & 0xff) << 24);
+    w[3] = ((input[3] >> 24) & 0xff) | (((input[3] >> 16) & 0xff) << 8) | (((input[3] >> 8) & 0xff) << 16) | ((input[3] & 0xff) << 24);
+
+    // round ROUND_SIZE
+    w[0] ^= key_dec[ROUND_SIZE * 4];
+    w[1] ^= key_dec[ROUND_SIZE * 4 + 1];
+    w[2] ^= key_dec[ROUND_SIZE * 4 + 2];
+    w[3] ^= key_dec[ROUND_SIZE * 4 + 3];
+#ifdef debug
+    printf("Round %d: ", ROUND_SIZE);
+    print_word_hex_device(w, BLOCK_WORDS);
+#endif
+    // round ROUND_SIZE-1 to 1
+    for (int r = ROUND_SIZE - 1; r > 0; r--)
+    {
+        w_new[0] = inv_T0[(w[0] >> 24) & 0xff] ^ inv_T1[(w[3] >> 16) & 0xff] ^ inv_T2[(w[2] >> 8) & 0xff] ^ inv_T3[w[1] & 0xff] ^ key_dec[r * 4];
+        w_new[1] = inv_T0[(w[1] >> 24) & 0xff] ^ inv_T1[(w[0] >> 16) & 0xff] ^ inv_T2[(w[3] >> 8) & 0xff] ^ inv_T3[w[2] & 0xff] ^ key_dec[r * 4 + 1];
+        w_new[2] = inv_T0[(w[2] >> 24) & 0xff] ^ inv_T1[(w[1] >> 16) & 0xff] ^ inv_T2[(w[0] >> 8) & 0xff] ^ inv_T3[w[3] & 0xff] ^ key_dec[r * 4 + 2];
+        w_new[3] = inv_T0[(w[3] >> 24) & 0xff] ^ inv_T1[(w[2] >> 16) & 0xff] ^ inv_T2[(w[1] >> 8) & 0xff] ^ inv_T3[w[0] & 0xff] ^ key_dec[r * 4 + 3];
+        for (int i = 0; i < BLOCK_WORDS; ++i)
+        {
+            w[i] = w_new[i];
+        }
+#ifdef debug
+        printf("Round %d: ", r);
+        print_word_hex_device(w, BLOCK_WORDS);
+#endif
+    }
+
+    // round 0: substituteBytes, shiftRows, addRoundKey
+    w_new[0] = (inv_sbox[(w[0] >> 24) & 0xff] << 24) ^ (inv_sbox[(w[3] >> 16) & 0xff] << 16) ^ (inv_sbox[(w[2] >> 8) & 0xff] << 8) ^ inv_sbox[w[1] & 0xff] ^ key_dec[0];
+    w_new[1] = (inv_sbox[(w[1] >> 24) & 0xff] << 24) ^ (inv_sbox[(w[0] >> 16) & 0xff] << 16) ^ (inv_sbox[(w[3] >> 8) & 0xff] << 8) ^ inv_sbox[w[2] & 0xff] ^ key_dec[1];
+    w_new[2] = (inv_sbox[(w[2] >> 24) & 0xff] << 24) ^ (inv_sbox[(w[1] >> 16) & 0xff] << 16) ^ (inv_sbox[(w[0] >> 8) & 0xff] << 8) ^ inv_sbox[w[3] & 0xff] ^ key_dec[2];
+    w_new[3] = (inv_sbox[(w[3] >> 24) & 0xff] << 24) ^ (inv_sbox[(w[2] >> 16) & 0xff] << 16) ^ (inv_sbox[(w[1] >> 8) & 0xff] << 8) ^ inv_sbox[w[0] & 0xff] ^ key_dec[3];
+#ifdef debug
+    printf("Round 0: ");
+    print_word_hex_device(w_new, BLOCK_WORDS);
+#endif
+
+    // get output
+    output[0] = ((w_new[0] >> 24) & 0xff) | (((w_new[0] >> 16) & 0xff) << 8) | (((w_new[0] >> 8) & 0xff) << 16) | ((w_new[0] & 0xff) << 24);
+    output[1] = ((w_new[1] >> 24) & 0xff) | (((w_new[1] >> 16) & 0xff) << 8) | (((w_new[1] >> 8) & 0xff) << 16) | ((w_new[1] & 0xff) << 24);
+    output[2] = ((w_new[2] >> 24) & 0xff) | (((w_new[2] >> 16) & 0xff) << 8) | (((w_new[2] >> 8) & 0xff) << 16) | ((w_new[2] & 0xff) << 24);
+    output[3] = ((w_new[3] >> 24) & 0xff) | (((w_new[3] >> 16) & 0xff) << 8) | (((w_new[3] >> 8) & 0xff) << 16) | ((w_new[3] & 0xff) << 24);
+}
+
+__global__ void decrypt_kernel(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+{
+    // global id
+    int gid = blockIdx.x * (blockDim.x * blockDim.y) + threadIdx.y * blockDim.x + threadIdx.x;
+
+    // one thread handle multiple blocks
+    int start_block = gid * blocks_per_thread;
+    int end_block = start_block + blocks_per_thread > block_num ? block_num : start_block + blocks_per_thread;
+
+    // T-table: 3*256*4 bytes, store in shared memory
+    // key: 44*4 bytes, store in register file
+    // sbox: 256 bytes, store in register file
+    for (int i = start_block; i < end_block; i++)
+    {
+        decrypt_block(input + i * BLOCK_WORDS, output + i * BLOCK_WORDS, key, T0, T1, T2, T3, sbox);
     }
 }
 
@@ -141,6 +218,56 @@ void AES128_Parallel::encrypt(int threads, int round_key_position, uchar input[]
     // std::cout << int(input[3]) << std::endl;
 
     encrypt_kernel<<<dimGrid, dimBlock>>>(x_d, y_d, blocks_per_thread, block_num, key_d, T0_d, T1_d, T2_d, T3_d, sbox_d);
+
+    cudaMemcpy(y_h, y_d, len, cudaMemcpyDeviceToHost);
+}
+
+void AES128_Parallel::decrypt(int threads, int round_key_position, uchar input[], uchar output[], int len)
+{
+    if (len % BLOCK_STATES != 0)
+    {
+        std::cerr << "[Error] Input size must be multiple of " << BLOCK_STATES << " bytes" << std::endl;
+        exit(1);
+    }
+
+    int block_num = len / (BLOCK_WORDS * 4);
+    int blocks_per_thread = (block_num + threads - 1) / threads;
+    printf("Kernel launcher: %d bytes, %d blocks, %d threads, %d blocks per thread\n", len, block_num, threads, blocks_per_thread);
+    dim3 dimBlock(32, 32, 1);
+    dim3 dimGrid((threads + 1023) / 1024, 1, 1);
+
+    // T-table and round key
+    int *inv_T0_d, *inv_T1_d, *inv_T2_d, *inv_T3_d;
+    cudaMalloc((int **)&inv_T0_d, sizeof(inv_T0));
+    cudaMalloc((int **)&inv_T1_d, sizeof(inv_T1));
+    cudaMalloc((int **)&inv_T2_d, sizeof(inv_T2));
+    cudaMalloc((int **)&inv_T3_d, sizeof(inv_T3));
+    cudaMemcpy(inv_T0_d, inv_T0, sizeof(inv_T0), cudaMemcpyHostToDevice);
+    cudaMemcpy(inv_T1_d, inv_T1, sizeof(inv_T1), cudaMemcpyHostToDevice);
+    cudaMemcpy(inv_T2_d, inv_T2, sizeof(inv_T2), cudaMemcpyHostToDevice);
+    cudaMemcpy(inv_T3_d, inv_T3, sizeof(inv_T3), cudaMemcpyHostToDevice);
+
+    // round keys
+    int *key_dec_d;
+    cudaMalloc((int **)&key_dec_d, sizeof(key_dec));
+    cudaMemcpy(key_dec_d, key_dec, sizeof(key_dec), cudaMemcpyHostToDevice);
+
+    // s-bodx
+    unsigned char *inv_sbox_d;
+    cudaMalloc((unsigned char **)&inv_sbox_d, sizeof(inv_sbox));
+    cudaMemcpy(inv_sbox_d, inv_sbox, sizeof(inv_sbox), cudaMemcpyHostToDevice);
+
+    // input and output
+    int *x_h, *y_h, *x_d, *y_d;
+    x_h = reinterpret_cast<int *>(input); // caution: x86 and arm both use little endian
+    y_h = reinterpret_cast<int *>(output);
+    cudaMalloc((int **)&x_d, len);
+    cudaMalloc((int **)&y_d, len);
+    cudaMemcpy(x_d, x_h, len, cudaMemcpyHostToDevice);
+    // std::cout << (x_h[0] >> 24) << std::endl;
+    // std::cout << int(input[3]) << std::endl;
+
+    decrypt_kernel<<<dimGrid, dimBlock>>>(x_d, y_d, blocks_per_thread, block_num, key_dec_d, inv_T0_d, inv_T1_d, inv_T2_d, inv_T3_d, inv_sbox_d);
 
     cudaMemcpy(y_h, y_d, len, cudaMemcpyDeviceToHost);
 }

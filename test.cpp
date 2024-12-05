@@ -55,6 +55,8 @@ void test_parallel()
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt(32, 0, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
+    cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
 }
 
