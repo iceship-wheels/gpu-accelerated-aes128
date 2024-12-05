@@ -20,24 +20,6 @@ Reference:
 #include "AES128.h"
 #include "AES_Serial.h"
 
-void print_byte_hex(uchar text[], uint len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        std::cout << std::hex << (int)text[i] << " ";
-    }
-    std::cout << std::endl;
-}
-
-void print_word_hex(uint32 text[], uint len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        std::cout << std::hex << ((text[i] >> 24) & 0xff) << " " << ((text[i] >> 16) & 0xff) << " " << ((text[i] >> 8) & 0xff) << " " << (text[i] & 0xff) << " ";
-    }
-    std::cout << std::endl;
-}
-
 /*
 Key & block are both 16 bytes
 Assume column-major stored
@@ -130,7 +112,7 @@ void AES128_Serial_Std::key_expansion()
     {
         for (int j = 0; j < BLOCK_STATES; j++)
         {
-            std::cout << std::hex << (int)key[i * BLOCK_STATES + j] << " ";
+            printf("%02x ", (int)key[i * BLOCK_STATES + j]);
         }
         std::cout << std::endl;
     }

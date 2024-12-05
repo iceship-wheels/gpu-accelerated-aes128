@@ -8,6 +8,9 @@ Date Created: 2024/11/4
 typedef unsigned char uchar;
 typedef unsigned int uint32;
 
+void print_byte_hex(uchar text[], int len);
+void print_word_hex(uint32 text[], int len);
+
 uchar gfmul(uchar a, uchar b);
 
 void verify_tbox();

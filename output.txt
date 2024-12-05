@@ -1,0 +1,229 @@
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/qc2335/e4750_project_aes/build
+Consolidate compiler generated dependencies of target AES128
+[ 22%] Built target AES128
+Consolidate compiler generated dependencies of target AES_Serial
+[ 44%] Built target AES_Serial
+Consolidate compiler generated dependencies of target AES_Parallel
+[ 55%] Building CUDA object CMakeFiles/AES_Parallel.dir/AES_Parallel_kernel.cu.o
+[ 66%] Linking CXX static library libAES_Parallel.a
+[ 77%] Built target AES_Parallel
+Consolidate compiler generated dependencies of target test
+[ 88%] Linking CXX executable ../test
+[100%] Built target test
+T-box verified.
+
+=======Serial AES128 (Standard)=======
+Key: 
+31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 
+28 a4 36 f7 1d 92 01 cf 24 a2 30 fd 17 96 05 cb 
+ba cf 29 07 a7 5d 28 c8 83 ff 18 35 94 69 1d fe 
+47 6b 92 25 e0 36 ba ed 63 c9 a2 d8 f7 a0 bf 26 
+af 63 65 4d 4f 55 df a0 2c 9c 7d 78 db 3c c2 5e 
+54 46 3d f4 1b 13 e2 54 37 8f 9f 2c ec b3 5d 72 
+19 0a 7d 3a 02 19 9f 6e 35 96 00 42 d9 25 5d 30 
+66 46 79 0f 64 5f e6 61 51 c9 e6 23 88 ec bb 13 
+28 ac 04 cb 4c f3 e2 aa 1d 3a 04 89 95 d6 bf 9a 
+c5 a4 bc e1 89 57 5e 4b 94 6d 5a c2 01 bb e5 58 
+19 7d d6 9d 90 2a 88 d6 04 47 d2 14 05 fc 37 4c 
+
+61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+----Encryption----
+Round 0
+[addRoundKey]: 50 50 50 50 50 50 50 50 50 5a 5a 5e 5e 5a 5a 46 
+
+Round 1
+[substituteBytes]: 53 53 53 53 53 53 53 53 53 be be 58 58 be be 5a 
+[permutation]: 53 53 be 5a 53 be be 53 53 be 53 53 58 53 53 58 
+[multiplication]: b7 76 89 ac 92 be 7f 53 7f 92 be be 4e 53 45 58 
+[addRoundKey]: 9f d2 bf 5b 8f 2c 7e 9c 5b 30 8e 43 59 c5 40 93 
+
+Round 2
+[substituteBytes]: db b5 08 39 73 71 f3 de 39 04 19 1a cb a6 09 dc 
+[permutation]: db 71 19 dc 73 04 09 39 39 a6 08 de cb b5 f3 1a 
+[multiplication]: fb ce e7 bd da 59 2e ea 55 a8 f6 42 a0 ae ad 34 
+[addRoundKey]: 41 01 ce ba 7d 04 06 22 d6 57 ee 77 34 c7 b0 ca 
+
+Round 3
+[substituteBytes]: 83 7c 8b f4 ff f2 6f 93 f6 5b 28 f5 18 c6 e7 74 
+[permutation]: 83 f2 28 74 ff 5b e7 f4 f6 c6 8b 93 18 7c 6f f5 
+[multiplication]: 4c 70 bd ac 1b 8f 76 55 be 74 93 71 2e a4 be ca 
+[addRoundKey]: 0b 1b 2f 89 fb b9 cc b8 dd bd 31 a9 d9 04 01 ec 
+
+Round 4
+[substituteBytes]: 2b af 15 a7 0f 56 4b 6c c1 7a c7 d3 35 f2 7c ce 
+[permutation]: 2b 56 c7 ce 0f 7a 7c a7 c1 f2 15 6c 35 af 4b d3 
+[multiplication]: a5 1b a1 6b 4b d8 7f 42 ed 6d ad 67 18 7e 62 06 
+[addRoundKey]: 0a 78 c4 26 04 8d a0 e2 c1 f1 d0 1f c3 42 a0 58 
+
+Round 5
+[substituteBytes]: 67 bc 1c f7 f2 5d e0 98 78 a1 70 c0 2e 2c e0 6a 
+[permutation]: 67 5d 70 6a f2 a1 e0 f7 78 2c 1c 98 2e bc e0 c0 
+[multiplication]: 33 27 64 50 10 67 8a b9 00 9c df 93 a3 b6 12 b5 
+[addRoundKey]: 67 61 59 a4 0b 74 68 ed 37 13 40 bf 4f 05 4f c7 
+
+Round 6
+[substituteBytes]: 85 ef cb 49 2b 92 45 55 9a 7d 09 08 84 6b 84 c6 
+[permutation]: 85 92 09 c6 2b 7d 84 49 9a 6b cb 55 84 ef 45 08 
+[multiplication]: 73 67 54 98 1c 0f 9e 16 0c 5f 83 bf 74 86 f9 2d 
+[addRoundKey]: 6a 6d 29 a2 1e 16 01 78 39 c9 83 fd ad a3 a4 1d 
+
+Round 7
+[substituteBytes]: 02 3c a5 3a 72 47 7c bc 12 dd ec 54 95 0a 49 a4 
+[permutation]: 02 47 ec a4 72 dd 49 3a 12 0a a5 bc 95 3c 7c 54 
+[multiplication]: 85 07 71 fe eb 32 73 76 23 4e 96 fa 5d 3d ad 4c 
+[addRoundKey]: e3 41 08 f1 8f 6d 95 17 72 87 70 d9 d5 d1 16 5f 
+
+Round 8
+[substituteBytes]: 11 83 30 a1 73 3c 2a f0 40 17 51 35 03 3e 47 cf 
+[permutation]: 11 3c 51 cf 73 17 47 a1 40 3e 30 f0 03 83 2a 35 
+[multiplication]: f8 55 c5 db 39 35 12 9c 02 9c 15 35 87 55 8b c6 
+[addRoundKey]: d0 f9 c1 10 75 c6 f0 36 1f a6 11 bc 12 83 34 5c 
+
+Round 9
+[substituteBytes]: 70 99 78 ca 9d b4 8c 05 c0 24 82 65 c9 ec 18 4a 
+[permutation]: 70 b4 82 4a 9d 24 18 ca c0 ec 78 05 c9 99 8c 65 
+[multiplication]: ef d4 05 32 9f 37 cc 0f c9 8e d3 c5 d0 0a fc 9f 
+[addRoundKey]: 2a 70 b9 d3 16 60 92 44 5d e3 89 07 d1 b1 19 c7 
+
+Round 10
+[substituteBytes]: e5 51 56 66 47 d0 4f 1b 4c 11 a7 c5 3e c8 d4 c6 
+[permutation]: e5 d0 a7 c6 47 11 d4 66 4c c8 56 1b 3e 51 4f c5 
+[addRoundKey]: fc ad 71 5b d7 3b 5c b0 48 8f 84 0f 3b ad 78 89 
+fc ad 71 5b d7 3b 5c b0 48 8f 84 0f 3b ad 78 89 
+----Decryption----
+Round 10
+[addRoundKey]: e5 d0 a7 c6 47 11 d4 66 4c c8 56 1b 3e 51 4f c5 
+
+Round 9
+[inv_permutation]: e5 51 56 66 47 d0 4f 1b 4c 11 a7 c5 3e c8 d4 c6 
+[inv_substituteBytes]: 2a 70 b9 d3 16 60 92 44 5d e3 89 07 d1 b1 19 c7 
+[addRoundKey]: ef d4 05 32 9f 37 cc 0f c9 8e d3 c5 d0 0a fc 9f 
+[inv_multiplication]: 70 b4 82 4a 9d 24 18 ca c0 ec 78 05 c9 99 8c 65 
+
+Round 8
+[inv_permutation]: 70 99 78 ca 9d b4 8c 05 c0 24 82 65 c9 ec 18 4a 
+[inv_substituteBytes]: d0 f9 c1 10 75 c6 f0 36 1f a6 11 bc 12 83 34 5c 
+[addRoundKey]: f8 55 c5 db 39 35 12 9c 02 9c 15 35 87 55 8b c6 
+[inv_multiplication]: 11 3c 51 cf 73 17 47 a1 40 3e 30 f0 03 83 2a 35 
+
+Round 7
+[inv_permutation]: 11 83 30 a1 73 3c 2a f0 40 17 51 35 03 3e 47 cf 
+[inv_substituteBytes]: e3 41 08 f1 8f 6d 95 17 72 87 70 d9 d5 d1 16 5f 
+[addRoundKey]: 85 07 71 fe eb 32 73 76 23 4e 96 fa 5d 3d ad 4c 
+[inv_multiplication]: 02 47 ec a4 72 dd 49 3a 12 0a a5 bc 95 3c 7c 54 
+
+Round 6
+[inv_permutation]: 02 3c a5 3a 72 47 7c bc 12 dd ec 54 95 0a 49 a4 
+[inv_substituteBytes]: 6a 6d 29 a2 1e 16 01 78 39 c9 83 fd ad a3 a4 1d 
+[addRoundKey]: 73 67 54 98 1c 0f 9e 16 0c 5f 83 bf 74 86 f9 2d 
+[inv_multiplication]: 85 92 09 c6 2b 7d 84 49 9a 6b cb 55 84 ef 45 08 
+
+Round 5
+[inv_permutation]: 85 ef cb 49 2b 92 45 55 9a 7d 09 08 84 6b 84 c6 
+[inv_substituteBytes]: 67 61 59 a4 0b 74 68 ed 37 13 40 bf 4f 05 4f c7 
+[addRoundKey]: 33 27 64 50 10 67 8a b9 00 9c df 93 a3 b6 12 b5 
+[inv_multiplication]: 67 5d 70 6a f2 a1 e0 f7 78 2c 1c 98 2e bc e0 c0 
+
+Round 4
+[inv_permutation]: 67 bc 1c f7 f2 5d e0 98 78 a1 70 c0 2e 2c e0 6a 
+[inv_substituteBytes]: 0a 78 c4 26 04 8d a0 e2 c1 f1 d0 1f c3 42 a0 58 
+[addRoundKey]: a5 1b a1 6b 4b d8 7f 42 ed 6d ad 67 18 7e 62 06 
+[inv_multiplication]: 2b 56 c7 ce 0f 7a 7c a7 c1 f2 15 6c 35 af 4b d3 
+
+Round 3
+[inv_permutation]: 2b af 15 a7 0f 56 4b 6c c1 7a c7 d3 35 f2 7c ce 
+[inv_substituteBytes]: 0b 1b 2f 89 fb b9 cc b8 dd bd 31 a9 d9 04 01 ec 
+[addRoundKey]: 4c 70 bd ac 1b 8f 76 55 be 74 93 71 2e a4 be ca 
+[inv_multiplication]: 83 f2 28 74 ff 5b e7 f4 f6 c6 8b 93 18 7c 6f f5 
+
+Round 2
+[inv_permutation]: 83 7c 8b f4 ff f2 6f 93 f6 5b 28 f5 18 c6 e7 74 
+[inv_substituteBytes]: 41 01 ce ba 7d 04 06 22 d6 57 ee 77 34 c7 b0 ca 
+[addRoundKey]: fb ce e7 bd da 59 2e ea 55 a8 f6 42 a0 ae ad 34 
+[inv_multiplication]: db 71 19 dc 73 04 09 39 39 a6 08 de cb b5 f3 1a 
+
+Round 1
+[inv_permutation]: db b5 08 39 73 71 f3 de 39 04 19 1a cb a6 09 dc 
+[inv_substituteBytes]: 9f d2 bf 5b 8f 2c 7e 9c 5b 30 8e 43 59 c5 40 93 
+[addRoundKey]: b7 76 89 ac 92 be 7f 53 7f 92 be be 4e 53 45 58 
+[inv_multiplication]: 53 53 be 5a 53 be be 53 53 be 53 53 58 53 53 58 
+Round 0
+[inv_substituteBytes]: 50 50 5a 46 50 5a 5a 50 50 5a 50 50 5e 50 50 5e 
+[inv_permutation]: 50 50 50 50 50 50 50 50 50 5a 5a 5e 5e 5a 5a 46 
+[addRoundKey]: 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+
+=======Serial AES128 (Fast)=======
+Key:
+31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 
+28 a4 36 f7 1d 92 01 cf 24 a2 30 fd 17 96 05 cb 
+ba cf 29 07 a7 5d 28 c8 83 ff 18 35 94 69 1d fe 
+47 6b 92 25 e0 36 ba ed 63 c9 a2 d8 f7 a0 bf 26 
+af 63 65 4d 4f 55 df a0 2c 9c 7d 78 db 3c c2 5e 
+54 46 3d f4 1b 13 e2 54 37 8f 9f 2c ec b3 5d 72 
+19 0a 7d 3a 02 19 9f 6e 35 96 00 42 d9 25 5d 30 
+66 46 79 0f 64 5f e6 61 51 c9 e6 23 88 ec bb 13 
+28 ac 04 cb 4c f3 e2 aa 1d 3a 04 89 95 d6 bf 9a 
+c5 a4 bc e1 89 57 5e 4b 94 6d 5a c2 01 bb e5 58 
+19 7d d6 9d 90 2a 88 d6 04 47 d2 14 05 fc 37 4c 
+Key_dec:
+31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 
+40 df c4 16 17 bf 89 60 46 df c4 16 47 c5 cb 06 
+9f a0 ba de 88 1f 33 be ce c0 f7 a8 89 05 3c ae 
+49 8e b1 ed c1 91 82 53 0f 51 75 fb 86 54 49 55 
+ac 52 b5 af 6d c3 37 fc 62 92 42 07 e4 c6 0b 52 
+96 17 52 08 fb d4 65 f4 99 46 27 f3 7d 80 2c a1 
+76 e6 ba 7e 8d 32 df 8a 14 74 f8 79 69 f4 d4 d8 
+8a d7 39 32 07 e5 e6 b8 13 91 1e c1 7a 65 ca 19 
+ae 45 14 b4 a9 a0 f2 0c ba 31 ec cd c0 54 26 d4 
+3f 5c 3e 61 96 fc cc 6d 2c cd 20 a0 ec 99 06 74 
+19 7d d6 9d 90 2a 88 d6 04 47 d2 14 05 fc 37 4c 
+61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+----Encryption----
+Round 0: 50 50 50 50 50 50 50 50 50 5a 5a 5e 5e 5a 5a 46 
+Round 1: 9f d2 bf 5b 8f 2c 7e 9c 5b 30 8e 43 59 c5 40 93 
+Round 2: 41 01 ce ba 7d 04 06 22 d6 57 ee 77 34 c7 b0 ca 
+Round 3: 0b 1b 2f 89 fb b9 cc b8 dd bd 31 a9 d9 04 01 ec 
+Round 4: 0a 78 c4 26 04 8d a0 e2 c1 f1 d0 1f c3 42 a0 58 
+Round 5: 67 61 59 a4 0b 74 68 ed 37 13 40 bf 4f 05 4f c7 
+Round 6: 6a 6d 29 a2 1e 16 01 78 39 c9 83 fd ad a3 a4 1d 
+Round 7: e3 41 08 f1 8f 6d 95 17 72 87 70 d9 d5 d1 16 5f 
+Round 8: d0 f9 c1 10 75 c6 f0 36 1f a6 11 bc 12 83 34 5c 
+Round 9: 2a 70 b9 d3 16 60 92 44 5d e3 89 07 d1 b1 19 c7 
+Round 10: fc ad 71 5b d7 3b 5c b0 48 8f 84 0f 3b ad 78 89 
+fc ad 71 5b d7 3b 5c b0 48 8f 84 0f 3b ad 78 89 
+----Decryption----
+Round 10: e5 d0 a7 c6 47 11 d4 66 4c c8 56 1b 3e 51 4f c5 
+Round 9: 70 b4 82 4a 9d 24 18 ca c0 ec 78 05 c9 99 8c 65 
+Round 8: 11 3c 51 cf 73 17 47 a1 40 3e 30 f0 03 83 2a 35 
+Round 7: 02 47 ec a4 72 dd 49 3a 12 0a a5 bc 95 3c 7c 54 
+Round 6: 85 92 09 c6 2b 7d 84 49 9a 6b cb 55 84 ef 45 08 
+Round 5: 67 5d 70 6a f2 a1 e0 f7 78 2c 1c 98 2e bc e0 c0 
+Round 4: 2b 56 c7 ce 0f 7a 7c a7 c1 f2 15 6c 35 af 4b d3 
+Round 3: 83 f2 28 74 ff 5b e7 f4 f6 c6 8b 93 18 7c 6f f5 
+Round 2: db 71 19 dc 73 04 09 39 39 a6 08 de cb b5 f3 1a 
+Round 1: 53 53 be 5a 53 be be 53 53 be 53 53 58 53 53 58 
+Round 0: 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+
+=======Parallel AES128=======
+61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 
+Kernel launcher: 16 bytes, 1 blocks, 32 threads, 1 blocks per thread
+Thread 0, block 0
+63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76 ca 82 c9 7d fa 59 47 f0 ad d4 a2 af 9c a4 72 c0 b7 fd 93 26 36 3f f7 cc 34 a5 e5 f1 71 d8 31 15 04 c7 23 c3 18 96 05 9a 07 12 80 e2 eb 27 b2 75 09 83 2c 1a 1b 6e 5a a0 52 3b d6 b3 29 e3 2f 84 53 d1 00 ed 20 fc b1 5b 6a cb be 39 4a 4c 58 cf d0 ef aa fb 43 4d 33 85 45 f9 02 7f 50 3c 9f a8 51 a3 40 8f 92 9d 38 f5 bc b6 da 21 10 ff f3 d2 cd 0c 13 ec 5f 97 44 17 c4 a7 7e 3d 64 5d 19 73 60 81 4f dc 22 2a 90 88 46 ee b8 14 de 5e 0b db e0 32 3a 0a 49 06 24 5c c2 d3 ac 62 91 95 e4 79 e7 c8 37 6d 8d d5 4e a9 6c 56 f4 ea 65 7a ae 08 ba 78 25 2e 1c a6 b4 c6 e8 dd 74 1f 4b bd 8b 8a 70 3e b5 66 48 03 f6 0e 61 35 57 b9 86 c1 1d 9e e1 f8 98 11 69 d9 8e 94 9b 1e 87 e9 ce 55 28 df 8c a1 89 0d bf e6 42 68 41 99 2d 0f b0 54 bb 16 
+Round 0: 50 50 50 50 50 50 50 50 50 5a 5a 5e 5e 5a 5a 46 
+Round 1: 9f d2 bf 5b 8f 2c 7e 9c 5b 30 8e 43 59 c5 40 93 
+Round 2: 41 01 ce ba 7d 04 06 22 d6 57 ee 77 34 c7 b0 ca 
+Round 3: 0b 1b 2f 89 fb b9 cc b8 dd bd 31 a9 d9 04 01 ec 
+Round 4: 0a 78 c4 26 04 8d a0 e2 c1 f1 d0 1f c3 42 a0 58 
+Round 5: 67 61 59 a4 0b 74 68 ed 37 13 40 bf 4f 05 4f c7 
+Round 6: 6a 6d 29 a2 1e 16 01 78 39 c9 83 fd ad a3 a4 1d 
+Round 7: e3 41 08 f1 8f 6d 95 17 72 87 70 d9 d5 d1 16 5f 
+Round 8: d0 f9 c1 10 75 c6 f0 36 1f a6 11 bc 12 83 34 5c 
+Round 9: 2a 70 b9 d3 16 60 92 44 5d e3 89 07 d1 b1 19 c7 
+Round 10: 19 7d d6 9d 90 2a 88 d6 04 47 d2 14 05 fc 37 4c 
+fc ad 71 5b d7 3b 5c b0 48 8f 84 0f 3b ad 78 89 
+5b 71 ad fc b0 5c 3b d7 0f 84 8f 48 89 78 ad 3b 
+fc ad 71 5b d7 3b 5c b0 48 8f 84 0f 3b ad 78 89 

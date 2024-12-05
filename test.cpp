@@ -4,9 +4,9 @@ Date Created: 2024/11/4
 */
 
 #include <iostream>
+#include "AES128.h"
 #include "AES_Serial.h"
 #include "AES_Parallel.h"
-#include "AES128.h"
 using namespace std;
 
 void test_serial()
@@ -19,7 +19,7 @@ void test_serial()
 
     // standard AES128
     cout << endl
-         << "=======standard AES128=======" << endl;
+         << "=======Serial AES128 (Standard)=======" << endl;
     cipher = new AES128_Serial_Std("1234567890123456");
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt((uchar *)plain_text, (uchar *)cipher_text, 16);
@@ -30,7 +30,7 @@ void test_serial()
 
     // fast AES128
     cout << endl
-         << "=======fast AES128=======" << endl;
+         << "=======Serial AES128 (Fast)=======" << endl;
     cipher = new AES128_Serial_Fast("1234567890123456");
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt((uchar *)plain_text, (uchar *)cipher_text, 16);
@@ -51,7 +51,7 @@ void test_parallel()
     // standard AES128
     cout << endl
          << "=======Parallel AES128=======" << endl;
-    cipher = new AES128_Parallel();
+    cipher = new AES128_Parallel("1234567890123456");
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt(32, 0, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
@@ -61,7 +61,7 @@ void test_parallel()
 int main()
 {
     verify_tbox();
-    // test_serial();
+    test_serial();
     test_parallel();
 
     return 0;

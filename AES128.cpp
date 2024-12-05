@@ -3,6 +3,24 @@
 
 #include "AES128.h"
 
+void print_byte_hex(uchar text[], int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        printf("%02x ", (int)text[i]);
+    }
+    std::cout << std::endl;
+}
+
+void print_word_hex(uint32 text[], int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        printf("%02x %02x %02x %02x ", (int)((text[i] >> 24) & 0xff), (int)((text[i] >> 16) & 0xff), (int)((text[i] >> 8) & 0xff), (int)(text[i] & 0xff));
+    }
+    std::cout << std::endl;
+}
+
 /*
 GF(2^8) multiplication
 GF(2^8) has multiple primitive polynomials

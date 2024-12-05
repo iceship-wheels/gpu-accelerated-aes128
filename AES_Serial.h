@@ -6,14 +6,12 @@ Date Created: 2024/11/4
 #ifndef __AES_SERIAL_H__
 #define __AES_SERIAL_H__
 #include "AES128.h"
+#include <string>
 
 // #define debug
 #define ROUND_SIZE 10   // 10 rounds of encryption
 #define BLOCK_STATES 16 // 16 bytes in a block
 #define BLOCK_WORDS 4   // or 4 words in a block
-
-void print_byte_hex(uchar text[], uint len);
-void print_word_hex(uint32 text[], uint len);
 
 class AES128_Serial
 {
