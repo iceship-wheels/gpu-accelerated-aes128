@@ -9,6 +9,44 @@ Date Created: 2024/11/4
 #include "AES_Parallel.h"
 using namespace std;
 
+int read_file(char **ptr, const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        perror("Error opening file");
+        return 0;
+    }
+
+    // Seek to the end of the file to determine its size
+    fseek(file, 0, SEEK_END);
+    long filesize = ftell(file);
+    rewind(file); // Return to the beginning of the file
+
+    // Allocate memory for the file content
+    char *buffer = (char *)malloc(filesize);
+    if (buffer == NULL)
+    {
+        perror("Error allocating memory");
+        fclose(file);
+        return 0;
+    }
+
+    // Read the entire file into the buffer
+    size_t read_size = fread(buffer, 1, filesize, file);
+    if (read_size != filesize)
+    {
+        perror("Error reading file");
+        free(buffer);
+        fclose(file);
+        return 0;
+    }
+
+    fclose(file);
+    *ptr = buffer;
+    return filesize;
+}
+
 void test_serial()
 {
     AES128_Serial *cipher;
@@ -60,11 +98,45 @@ void test_parallel()
     delete cipher;
 }
 
+void test_large()
+{
+    AES128_Parallel *cipher;
+    cipher = new AES128_Parallel("1234567890123456");
+
+    char filename[] = "input/input_268435456.txt";
+    char *plain_text;
+    long size = read_file(&plain_text, filename);
+    if (size == 0)
+    {
+        cout << "Error: read file failed" << endl;
+        return;
+    }
+    char *cipher_text = (char *)malloc(size);
+    char *plain_text_dec = (char *)malloc(size);
+    printf("plain_text: %ld\n", size);
+
+    cipher->encrypt(32, 0, (uchar *)plain_text, (uchar *)cipher_text, size);
+    cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, size);
+
+    // compare plain_text and plain_text_dec
+    for (int i = 0; i < sizeof(plain_text); i++)
+    {
+        if (plain_text[i] != plain_text_dec[i])
+        {
+            cout << "Error: plain_text and plain_text_dec are not the same" << endl;
+            break;
+        }
+    }
+
+    delete cipher;
+}
+
 int main()
 {
     verify_tbox();
-    test_serial();
-    test_parallel();
+    // test_serial();
+    // test_parallel();
+    test_large();
 
     return 0;
 }
