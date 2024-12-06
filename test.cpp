@@ -4,12 +4,13 @@ Date Created: 2024/11/4
 */
 
 #include <iostream>
+#include <vector>
 #include "AES128.h"
 #include "AES_Serial.h"
 #include "AES_Parallel.h"
 using namespace std;
 
-int read_file(char **ptr, const char *filename)
+size_t read_file(uchar **ptr, const char *filename)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL)
@@ -20,11 +21,11 @@ int read_file(char **ptr, const char *filename)
 
     // Seek to the end of the file to determine its size
     fseek(file, 0, SEEK_END);
-    long filesize = ftell(file);
+    size_t filesize = ftell(file);
     rewind(file); // Return to the beginning of the file
 
     // Allocate memory for the file content
-    char *buffer = (char *)malloc(filesize);
+    uchar *buffer = (uchar *)malloc(filesize);
     if (buffer == NULL)
     {
         perror("Error allocating memory");
@@ -45,6 +46,18 @@ int read_file(char **ptr, const char *filename)
     fclose(file);
     *ptr = buffer;
     return filesize;
+}
+
+bool compare_bytes(uchar *a, uchar *b, int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        if (a[i] != b[i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void test_serial()
@@ -100,35 +113,49 @@ void test_parallel()
 
 void test_large()
 {
-    AES128_Parallel *cipher;
-    cipher = new AES128_Parallel("1234567890123456");
+    // ciphers
+    AES128_Serial_Std *serial_std_cipher;
+    serial_std_cipher = new AES128_Serial_Std("1234567890123456");
+    AES128_Serial_Fast *serial_fast_cipher;
+    serial_fast_cipher = new AES128_Serial_Fast("1234567890123456");
+    AES128_Parallel *parallel_cipher;
+    parallel_cipher = new AES128_Parallel("1234567890123456");
 
-    char filename[] = "input/input_268435456.txt";
-    char *plain_text;
-    long size = read_file(&plain_text, filename);
-    if (size == 0)
+    // input files
+    std::vector<std::string> filenames = {"input/input_8192.txt", "input/input_65536.txt", "input/input_524288.txt", "input/input_4194304.txt", "input/input_33554432.txt", "input/input_268435456.txt"};
+    uchar *plain_text, *cipher_text, *plain_text_dec;
+
+    for (int i = 0; i < filenames.size(); i++)
     {
-        cout << "Error: read file failed" << endl;
-        return;
-    }
-    char *cipher_text = (char *)malloc(size);
-    char *plain_text_dec = (char *)malloc(size);
-    printf("plain_text: %ld\n", size);
-
-    cipher->encrypt(32, 0, (uchar *)plain_text, (uchar *)cipher_text, size);
-    cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, size);
-
-    // compare plain_text and plain_text_dec
-    for (int i = 0; i < sizeof(plain_text); i++)
-    {
-        if (plain_text[i] != plain_text_dec[i])
+        printf("=======File %s=======\n", filenames[i].c_str());
+        size_t size = read_file(&plain_text, filenames[i].c_str());
+        if (size == 0)
         {
-            cout << "Error: plain_text and plain_text_dec are not the same" << endl;
+            cout << "Error: read file failed" << endl;
             break;
         }
-    }
+        cipher_text = (uchar *)malloc(size);
+        plain_text_dec = (uchar *)malloc(size);
 
-    delete cipher;
+        if (size <= (1 << 23))
+        {
+            serial_std_cipher->encrypt(plain_text, cipher_text, size);
+            serial_std_cipher->decrypt(cipher_text, plain_text_dec, size);
+            std::cout << "Serial Std: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+
+            serial_fast_cipher->encrypt(plain_text, cipher_text, size);
+            serial_fast_cipher->decrypt(cipher_text, plain_text_dec, size);
+            std::cout << "Serial Fast: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        }
+
+        parallel_cipher->encrypt(32, 0, plain_text, cipher_text, size);
+        parallel_cipher->decrypt(32, 0, cipher_text, plain_text_dec, size);
+        std::cout << "Parallel: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+
+        free(plain_text);
+        free(cipher_text);
+        free(plain_text_dec);
+    }
 }
 
 int main()
