@@ -182,9 +182,9 @@ void AES128_Parallel::encrypt(int threads, int round_key_position, uchar input[]
 
     int block_num = len / (BLOCK_WORDS * 4);
     int blocks_per_thread = (block_num + threads - 1) / threads;
-    printf("Kernel launcher: %d bytes, %d blocks, %d threads, %d blocks per thread\n", len, block_num, threads, blocks_per_thread);
-    dim3 dimBlock(32, 32, 1);
-    dim3 dimGrid((threads + 1023) / 1024, 1, 1);
+    printf("Kernel launcher: %d bytes, %d cipher blocks, %d threads, %d cipher blocks per thread\n", len, block_num, threads, blocks_per_thread);
+    dim3 dimBlock(32, 16, 1);
+    dim3 dimGrid((threads + 511) / 512, 1, 1);
 
     // T-table and round key
     int *T0_d, *T1_d, *T2_d, *T3_d;
@@ -232,9 +232,9 @@ void AES128_Parallel::decrypt(int threads, int round_key_position, uchar input[]
 
     int block_num = len / (BLOCK_WORDS * 4);
     int blocks_per_thread = (block_num + threads - 1) / threads;
-    printf("Kernel launcher: %d bytes, %d blocks, %d threads, %d blocks per thread\n", len, block_num, threads, blocks_per_thread);
-    dim3 dimBlock(32, 32, 1);
-    dim3 dimGrid((threads + 1023) / 1024, 1, 1);
+    printf("Kernel launcher: %d bytes, %d cipher blocks, %d threads, %d cipher blocks per thread\n", len, block_num, threads, blocks_per_thread);
+    dim3 dimBlock(32, 16, 1);
+    dim3 dimGrid((threads + 511) / 512, 1, 1);
 
     // T-table and round key
     int *inv_T0_d, *inv_T1_d, *inv_T2_d, *inv_T3_d;

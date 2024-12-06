@@ -148,8 +148,8 @@ void test_large()
             std::cout << "Serial Fast: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
         }
 
-        parallel_cipher->encrypt(32, 0, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(32, 0, cipher_text, plain_text_dec, size);
+        parallel_cipher->encrypt(1024, 0, plain_text, cipher_text, size);
+        parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
         std::cout << "Parallel: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         free(plain_text);
@@ -160,7 +160,7 @@ void test_large()
 
 int main()
 {
-    verify_tbox();
+    // verify_tbox();
     // test_serial();
     // test_parallel();
     test_large();

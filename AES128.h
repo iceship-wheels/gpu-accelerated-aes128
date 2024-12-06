@@ -2,8 +2,8 @@
 Author: Qiuhong Chen
 Date Created: 2024/11/4
 */
-#ifndef AES128_H
-#define AES128_H
+#ifndef __AES128_H__
+#define __AES128_H__
 
 typedef unsigned char uchar;
 typedef unsigned int uint32;
