@@ -274,7 +274,7 @@ __global__ void encrypt_kernel_3(int *input, int *output, int blocks_per_thread,
     int end_block = start_block + blocks_per_thread > block_num ? block_num : start_block + blocks_per_thread;
     int fake_word[4];
 
-    for (int i = start_block; i < start_block + 32; i++)
+    for (int i = start_block; i < start_block + blocks_per_thread; i++)
     {
         encrypt_block_warp_shuffle(i < end_block ? input + i * BLOCK_WORDS : fake_word, i < end_block ? output + i * BLOCK_WORDS : fake_word, T0_shared, T1_shared, T2_shared, T3_shared, sbox_shared, &key_local_0, &key_local_1, &key_local_2, &key_local_3);
     }

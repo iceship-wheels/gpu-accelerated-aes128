@@ -1,13 +1,8 @@
 import random
 import string
 
-
-def random_string(length):
-    letters = string.ascii_letters
-    return "".join(random.choice(letters) for i in range(length))
-
-
-file_size = [2**i for i in range(13, 30, 3)]
+file_size = [2**i for i in range(14, 31, 2)]
 for size in file_size:
     with open(f"input_{size}.txt", "w") as f:
-        f.write(random_string(size))
+        # f.write("a" * size)
+        f.write("".join(random.choices(string.ascii_letters, k=size)))

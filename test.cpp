@@ -10,7 +10,7 @@ Date Created: 2024/11/4
 #include "AES_Parallel.h"
 using namespace std;
 
-size_t read_file(uchar **ptr, const char *filename)
+size_t read_file_malloc(uchar **ptr, const char *filename)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL)
@@ -54,7 +54,7 @@ bool compare_bytes(uchar *a, uchar *b, int len)
     {
         if (a[i] != b[i])
         {
-            printf("Error: a[%d] = %d, b[%d] = %d\n", i, a[i], i, b[i]);
+            printf("Error at position %d: %x != %x\n", i, a[i], b[i]);
             return false;
         }
     }
@@ -163,13 +163,17 @@ void test_large()
     parallel_cipher = new AES128_Parallel("1234567890123456");
 
     // input files
-    std::vector<std::string> filenames = {"input/input_8192.txt", "input/input_65536.txt", "input/input_524288.txt", "input/input_4194304.txt", "input/input_33554432.txt", "input/input_268435456.txt"};
+    std::vector<std::string> filenames = {"input/input_16384.txt", "input/input_65536.txt",
+                                          "input/input_262144.txt", "input/input_1048576.txt",
+                                          "input/input_4194304.txt", "input/input_16777216.txt",
+                                          "input/input_67108864.txt", "input/input_268435456.txt",
+                                          "input/input_1073741824.txt"};
     uchar *plain_text, *cipher_text, *plain_text_dec;
 
     for (int i = 0; i < filenames.size(); i++)
     {
         printf("=======File %s=======\n", filenames[i].c_str());
-        size_t size = read_file(&plain_text, filenames[i].c_str());
+        size_t size = read_file_malloc(&plain_text, filenames[i].c_str());
         if (size == 0)
         {
             cout << "Error: read file failed" << endl;
@@ -178,32 +182,35 @@ void test_large()
         cipher_text = (uchar *)malloc(size);
         plain_text_dec = (uchar *)malloc(size);
 
-        if (size <= (1 << 20))
+        if (size <= (1 << 23))
         {
             serial_std_cipher->encrypt(plain_text, cipher_text, size);
             serial_std_cipher->decrypt(cipher_text, plain_text_dec, size);
-            std::cout << "Serial Std: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+            std::cout << "Serial (Std): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
             serial_fast_cipher->encrypt(plain_text, cipher_text, size);
             serial_fast_cipher->decrypt(cipher_text, plain_text_dec, size);
-            std::cout << "Serial Fast: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+            std::cout << "Serial (Fast): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
         }
 
         parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_GLOBAL, plain_text, cipher_text, size);
         parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel ALL GLOBAL: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        std::cout << "Parallel (ALL GLOBAL): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_SHARED, plain_text, cipher_text, size);
         parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel ALL SHARED: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        std::cout << "Parallel (ALL SHARED): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         parallel_cipher->encrypt(1024, OPTIMIZATION::WARP_SHUFFLE, plain_text, cipher_text, size);
         parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel WARP SHUFFLE: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        std::cout << "Parallel (WARP SHUFFLE): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         free(plain_text);
         free(cipher_text);
         free(plain_text_dec);
+        delete serial_std_cipher;
+        delete serial_fast_cipher;
+        delete parallel_cipher;
     }
 }
 
