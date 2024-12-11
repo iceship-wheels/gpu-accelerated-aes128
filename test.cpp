@@ -107,8 +107,8 @@ void test_parallel_1()
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt(32, OPTIMIZATION::ALL_GLOBAL, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
-    // cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
-    // print_byte_hex((uchar *)plain_text_dec, 16);
+    cipher->decrypt(32, OPTIMIZATION::ALL_GLOBAL, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
 }
 
@@ -127,7 +127,7 @@ void test_parallel_2()
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt(32, OPTIMIZATION::ALL_SHARED, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
-    cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    cipher->decrypt(32, OPTIMIZATION::ALL_SHARED, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
     print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
 }
@@ -147,8 +147,8 @@ void test_parallel_3()
     print_byte_hex((uchar *)plain_text, 16);
     cipher->encrypt(32, OPTIMIZATION::WARP_SHUFFLE, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
-    // cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
-    // print_byte_hex((uchar *)plain_text_dec, 16);
+    cipher->decrypt(32, OPTIMIZATION::WARP_SHUFFLE, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
 }
 
@@ -194,24 +194,24 @@ void test_large()
         }
 
         parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_GLOBAL, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
+        parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_GLOBAL, cipher_text, plain_text_dec, size);
         std::cout << "Parallel (ALL GLOBAL): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_SHARED, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
+        parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_SHARED, cipher_text, plain_text_dec, size);
         std::cout << "Parallel (ALL SHARED): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         parallel_cipher->encrypt(1024, OPTIMIZATION::WARP_SHUFFLE, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
+        parallel_cipher->decrypt(1024, OPTIMIZATION::WARP_SHUFFLE, cipher_text, plain_text_dec, size);
         std::cout << "Parallel (WARP SHUFFLE): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
-
-        free(plain_text);
-        free(cipher_text);
-        free(plain_text_dec);
-        delete serial_std_cipher;
-        delete serial_fast_cipher;
-        delete parallel_cipher;
     }
+
+    free(plain_text);
+    free(cipher_text);
+    free(plain_text_dec);
+    delete serial_std_cipher;
+    delete serial_fast_cipher;
+    delete parallel_cipher;
 }
 
 int main()

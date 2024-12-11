@@ -46,7 +46,7 @@ protected:
 
 public:
     void encrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
-    void decrypt(int threads, int round_key_position, uchar input[], uchar output[], int len);
+    void decrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
     AES128_Parallel(std::string key);
 };
 
