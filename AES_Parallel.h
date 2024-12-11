@@ -14,6 +14,13 @@ Date Created: 2024/11/4
 #define BLOCK_WORDS 4   // or 4 words in a block
 #define THREAD_BLOCKS 4 // number of blocks processed by each thread
 
+enum OPTIMIZATION
+{
+    ALL_GLOBAL = 0,
+    ALL_SHARED = 1,
+    WARP_SHUFFLE = 2
+};
+
 class AES128_Parallel
 {
 protected:
@@ -38,7 +45,7 @@ protected:
     void inv_multiplication(uchar state[BLOCK_STATES]);
 
 public:
-    void encrypt(int threads, int round_key_position, uchar input[], uchar output[], int len);
+    void encrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
     void decrypt(int threads, int round_key_position, uchar input[], uchar output[], int len);
     AES128_Parallel(std::string key);
 };

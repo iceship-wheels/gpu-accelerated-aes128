@@ -63,6 +63,20 @@ void AES128_Parallel::key_expansion()
             key_dec[i * 4 + j] = (states[j * 4] << 24) | (states[j * 4 + 1] << 16) | (states[j * 4 + 2] << 8) | states[j * 4 + 3];
         }
     }
+
+#ifdef debug
+    // print key
+    std::cout << "Key:" << std::endl;
+    for (int i = 0; i < 11; ++i)
+    {
+        print_word_hex(key + i * 4, 4);
+    }
+    std::cout << "Key_dec:" << std::endl;
+    for (int i = 0; i < 11; ++i)
+    {
+        print_word_hex(key_dec + i * 4, 4);
+    }
+#endif
 }
 
 void AES128_Parallel::inv_multiplication(uchar state[BLOCK_STATES])

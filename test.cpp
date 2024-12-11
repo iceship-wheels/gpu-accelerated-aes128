@@ -54,6 +54,7 @@ bool compare_bytes(uchar *a, uchar *b, int len)
     {
         if (a[i] != b[i])
         {
+            printf("Error: a[%d] = %d, b[%d] = %d\n", i, a[i], i, b[i]);
             return false;
         }
     }
@@ -91,7 +92,7 @@ void test_serial()
     delete cipher;
 }
 
-void test_parallel()
+void test_parallel_1()
 {
     AES128_Parallel *cipher;
 
@@ -101,13 +102,53 @@ void test_parallel()
 
     // standard AES128
     cout << endl
-         << "=======Parallel AES128=======" << endl;
+         << "=======Parallel AES128 (All Global)=======" << endl;
     cipher = new AES128_Parallel("1234567890123456");
     print_byte_hex((uchar *)plain_text, 16);
-    cipher->encrypt(32, 0, (uchar *)plain_text, (uchar *)cipher_text, 16);
+    cipher->encrypt(32, OPTIMIZATION::ALL_GLOBAL, (uchar *)plain_text, (uchar *)cipher_text, 16);
+    print_byte_hex((uchar *)cipher_text, 16);
+    // cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    // print_byte_hex((uchar *)plain_text_dec, 16);
+    delete cipher;
+}
+
+void test_parallel_2()
+{
+    AES128_Parallel *cipher;
+
+    char plain_text[17] = "abcdefghijklmnop";
+    char cipher_text[17];
+    char plain_text_dec[17];
+
+    // standard AES128
+    cout << endl
+         << "=======Parallel AES128 (All Shared)=======" << endl;
+    cipher = new AES128_Parallel("1234567890123456");
+    print_byte_hex((uchar *)plain_text, 16);
+    cipher->encrypt(32, OPTIMIZATION::ALL_SHARED, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
     cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
     print_byte_hex((uchar *)plain_text_dec, 16);
+    delete cipher;
+}
+
+void test_parallel_3()
+{
+    AES128_Parallel *cipher;
+
+    char plain_text[17] = "abcdefghijklmnop";
+    char cipher_text[17];
+    char plain_text_dec[17];
+
+    // standard AES128
+    cout << endl
+         << "=======Parallel AES128 (Warp Shuffle)=======" << endl;
+    cipher = new AES128_Parallel("1234567890123456");
+    print_byte_hex((uchar *)plain_text, 16);
+    cipher->encrypt(32, OPTIMIZATION::WARP_SHUFFLE, (uchar *)plain_text, (uchar *)cipher_text, 16);
+    print_byte_hex((uchar *)cipher_text, 16);
+    // cipher->decrypt(32, 0, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    // print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
 }
 
@@ -137,7 +178,7 @@ void test_large()
         cipher_text = (uchar *)malloc(size);
         plain_text_dec = (uchar *)malloc(size);
 
-        if (size <= (1 << 23))
+        if (size <= (1 << 20))
         {
             serial_std_cipher->encrypt(plain_text, cipher_text, size);
             serial_std_cipher->decrypt(cipher_text, plain_text_dec, size);
@@ -148,9 +189,17 @@ void test_large()
             std::cout << "Serial Fast: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
         }
 
-        parallel_cipher->encrypt(1024, 0, plain_text, cipher_text, size);
+        parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_GLOBAL, plain_text, cipher_text, size);
         parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        std::cout << "Parallel ALL GLOBAL: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+
+        parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_SHARED, plain_text, cipher_text, size);
+        parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
+        std::cout << "Parallel ALL SHARED: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+
+        parallel_cipher->encrypt(1024, OPTIMIZATION::WARP_SHUFFLE, plain_text, cipher_text, size);
+        parallel_cipher->decrypt(1024, 0, cipher_text, plain_text_dec, size);
+        std::cout << "Parallel WARP SHUFFLE: " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
 
         free(plain_text);
         free(cipher_text);
@@ -162,7 +211,9 @@ int main()
 {
     // verify_tbox();
     // test_serial();
-    // test_parallel();
+    // test_parallel_1();
+    // test_parallel_2();
+    // test_parallel_3();
     test_large();
 
     return 0;
