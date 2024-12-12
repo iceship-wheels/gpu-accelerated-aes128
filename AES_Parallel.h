@@ -45,8 +45,8 @@ protected:
     void inv_multiplication(uchar state[BLOCK_STATES]);
 
 public:
-    void encrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
-    void decrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
+    METRIC encrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
+    METRIC decrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len);
     AES128_Parallel(std::string key);
 };
 

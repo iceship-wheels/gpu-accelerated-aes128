@@ -34,8 +34,8 @@ protected:
     virtual void decrypt_block(uchar input[BLOCK_STATES], uchar output[BLOCK_STATES]) = 0;
 
 public:
-    void encrypt(uchar input[], uchar output[], int len);
-    void decrypt(uchar input[], uchar output[], int len);
+    METRIC encrypt(uchar input[], uchar output[], int len);
+    METRIC decrypt(uchar input[], uchar output[], int len);
 };
 
 class AES128_Serial_Std : public AES128_Serial

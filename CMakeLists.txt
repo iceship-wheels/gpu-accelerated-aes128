@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project (test CUDA CXX)
+project (Accelerated_AES128 CUDA CXX)
 
 # libraries
 add_library(AES128 AES128.cpp)
@@ -12,6 +12,14 @@ target_link_libraries(AES_Parallel AES128)
 add_executable (test test.cpp)
 target_link_libraries(test AES_Serial AES_Parallel AES128)
 set_target_properties(test
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
+)
+
+add_executable(profile profile.cpp)
+target_link_libraries(profile AES_Serial AES_Parallel AES128)
+set_target_properties(profile
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
     LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"

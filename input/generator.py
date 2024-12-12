@@ -1,7 +1,7 @@
 import random
 import string
 
-file_size = [2**i for i in range(14, 31, 2)]
+file_size = [2**i for i in range(10, 31, 2)]
 for size in file_size:
     with open(f"input_{size}.txt", "w") as f:
         # f.write("a" * size)

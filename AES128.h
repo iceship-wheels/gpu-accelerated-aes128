@@ -5,6 +5,11 @@ Date Created: 2024/11/4
 #ifndef __AES128_H__
 #define __AES128_H__
 
+struct METRIC
+{
+    float milliseconds;
+};
+
 typedef unsigned char uchar;
 typedef unsigned int uint32;
 

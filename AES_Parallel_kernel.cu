@@ -19,7 +19,7 @@ __device__ void print_word_hex_device(int *text, int len)
 
 #pragma region Encryption
 
-__device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
 #ifdef debug
     printf("----Encryption----\n");
@@ -77,7 +77,7 @@ __device__ void encrypt_block(int *input, int *output, int *key, int *T0, int *T
     output[3] = ((w_new[3] >> 24) & 0xff) | (((w_new[3] >> 16) & 0xff) << 8) | (((w_new[3] >> 8) & 0xff) << 16) | ((w_new[3] & 0xff) << 24);
 }
 
-__device__ void encrypt_block_warp_shuffle(int *input, int *output, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox, int *key_0, int *key_1, int *key_2, int *key_3)
+__device__ void encrypt_block_warp_shuffle(int *input, int *output, int *T0, int *T1, int *T2, int *T3, uchar *sbox, int *key_0, int *key_1, int *key_2, int *key_3)
 {
 #ifdef debug
     if (input != output)
@@ -156,7 +156,7 @@ T-table: 4*256*4 bytes, global memory
 key: 44*4 bytes, global memory
 sbox: 256 bytes, global memory
 */
-__global__ void encrypt_kernel_1(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__global__ void encrypt_kernel_1(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
     // global id
     int gid = blockIdx.x * (blockDim.x * blockDim.y) + threadIdx.y * blockDim.x + threadIdx.x;
@@ -177,7 +177,7 @@ T-table: 4*256*4 bytes, shared memory
 key: 44*4 bytes, shared memory
 sbox: 256 bytes, shared memory
 */
-__global__ void encrypt_kernel_2(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__global__ void encrypt_kernel_2(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
     // global id
     int tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -189,7 +189,7 @@ __global__ void encrypt_kernel_2(int *input, int *output, int blocks_per_thread,
     __shared__ int T1_shared[256];
     __shared__ int T2_shared[256];
     __shared__ int T3_shared[256];
-    __shared__ unsigned char sbox_shared[256];
+    __shared__ uchar sbox_shared[256];
 
     if (tid < 44 * 4)
     {
@@ -222,7 +222,7 @@ T-table: 4*256*4 bytes, shared memory
 key: 44*4 bytes, register file
 sbox: 256 bytes, shared memory
 */
-__global__ void encrypt_kernel_3(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__global__ void encrypt_kernel_3(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
     // global id
     int tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -243,7 +243,7 @@ __global__ void encrypt_kernel_3(int *input, int *output, int blocks_per_thread,
     __shared__ int T1_shared[256];
     __shared__ int T2_shared[256];
     __shared__ int T3_shared[256];
-    __shared__ unsigned char sbox_shared[256];
+    __shared__ uchar sbox_shared[256];
 
     if (tid < 256)
     {
@@ -289,7 +289,7 @@ __global__ void encrypt_kernel_3(int *input, int *output, int blocks_per_thread,
 /*
 Wrapper function for kernal launch
 */
-void AES128_Parallel::encrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len)
+METRIC AES128_Parallel::encrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len)
 {
     if (len % BLOCK_STATES != 0)
     {
@@ -302,6 +302,12 @@ void AES128_Parallel::encrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     printf("Encrypt kernel launcher: %d bytes, %d cipher blocks, %d threads, %d cipher blocks per thread\n", len, block_num, threads, blocks_per_thread);
     dim3 dimBlock(512, 1, 1);
     dim3 dimGrid((threads + 511) / 512, 1, 1);
+
+    // timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
 
     // T-table and round key
     int *T0_d, *T1_d, *T2_d, *T3_d;
@@ -320,8 +326,8 @@ void AES128_Parallel::encrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     cudaMemcpy(key_d, key, sizeof(key), cudaMemcpyHostToDevice);
 
     // s-box
-    unsigned char *sbox_d;
-    cudaMalloc((unsigned char **)&sbox_d, sizeof(sbox));
+    uchar *sbox_d;
+    cudaMalloc((uchar **)&sbox_d, sizeof(sbox));
     cudaMemcpy(sbox_d, sbox, sizeof(sbox), cudaMemcpyHostToDevice);
 
     // input and output
@@ -333,6 +339,7 @@ void AES128_Parallel::encrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     cudaMemcpy(x_d, x_h, len, cudaMemcpyHostToDevice);
     // std::cout << (x_h[0] >> 24) << std::endl;
     // std::cout << int(input[3]) << std::endl;
+
     switch (opt)
     {
     case ALL_GLOBAL:
@@ -350,13 +357,20 @@ void AES128_Parallel::encrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     }
 
     cudaMemcpy(y_h, y_d, len, cudaMemcpyDeviceToHost);
+
+    // timing
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    return METRIC{milliseconds};
 }
 
 #pragma endregion
 
 #pragma region Decryption
 
-__device__ void decrypt_block(int *input, int *output, int *key_dec, int *inv_T0, int *inv_T1, int *inv_T2, int *inv_T3, unsigned char *inv_sbox)
+__device__ void decrypt_block(int *input, int *output, int *key_dec, int *inv_T0, int *inv_T1, int *inv_T2, int *inv_T3, uchar *inv_sbox)
 {
 #ifdef debug
     printf("----Decryption----\n");
@@ -414,7 +428,7 @@ __device__ void decrypt_block(int *input, int *output, int *key_dec, int *inv_T0
     output[3] = ((w_new[3] >> 24) & 0xff) | (((w_new[3] >> 16) & 0xff) << 8) | (((w_new[3] >> 8) & 0xff) << 16) | ((w_new[3] & 0xff) << 24);
 }
 
-__device__ void decrypt_block_warp_shuffle(int *input, int *output, int *inv_T0, int *inv_T1, int *inv_T2, int *inv_T3, unsigned char *inv_sbox, int *key_dec_0, int *key_dec_1, int *key_dec_2, int *key_dec_3)
+__device__ void decrypt_block_warp_shuffle(int *input, int *output, int *inv_T0, int *inv_T1, int *inv_T2, int *inv_T3, uchar *inv_sbox, int *key_dec_0, int *key_dec_1, int *key_dec_2, int *key_dec_3)
 {
 #ifdef debug
     if (input != output)
@@ -493,7 +507,7 @@ T-table: 4*256*4 bytes, global memory
 key: 44*4 bytes, global memory
 sbox: 256 bytes, global memory
 */
-__global__ void decrypt_kernel_all_global(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__global__ void decrypt_kernel_all_global(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
     // global id
     int gid = blockIdx.x * (blockDim.x * blockDim.y) + threadIdx.y * blockDim.x + threadIdx.x;
@@ -514,7 +528,7 @@ T-table: 4*256*4 bytes, shared memory
 key: 44*4 bytes, shared memory
 sbox: 256 bytes, shared memory
 */
-__global__ void decrypt_kernel_all_shared(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__global__ void decrypt_kernel_all_shared(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
     // global id
     int tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -526,7 +540,7 @@ __global__ void decrypt_kernel_all_shared(int *input, int *output, int blocks_pe
     __shared__ int T1_shared[256];
     __shared__ int T2_shared[256];
     __shared__ int T3_shared[256];
-    __shared__ unsigned char sbox_shared[256];
+    __shared__ uchar sbox_shared[256];
 
     if (tid < 44 * 4)
     {
@@ -559,7 +573,7 @@ T-table: 4*256*4 bytes, shared memory
 key: 44*4 bytes, register file
 sbox: 256 bytes, shared memory
 */
-__global__ void decrypt_kernel_warp_shuffle(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, unsigned char *sbox)
+__global__ void decrypt_kernel_warp_shuffle(int *input, int *output, int blocks_per_thread, int block_num, int *key, int *T0, int *T1, int *T2, int *T3, uchar *sbox)
 {
     // global id
     int tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -580,7 +594,7 @@ __global__ void decrypt_kernel_warp_shuffle(int *input, int *output, int blocks_
     __shared__ int T1_shared[256];
     __shared__ int T2_shared[256];
     __shared__ int T3_shared[256];
-    __shared__ unsigned char sbox_shared[256];
+    __shared__ uchar sbox_shared[256];
 
     if (tid < 256)
     {
@@ -606,7 +620,7 @@ __global__ void decrypt_kernel_warp_shuffle(int *input, int *output, int blocks_
 
 #pragma endregion
 
-void AES128_Parallel::decrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len)
+METRIC AES128_Parallel::decrypt(int threads, OPTIMIZATION opt, uchar input[], uchar output[], int len)
 {
     if (len % BLOCK_STATES != 0)
     {
@@ -619,6 +633,12 @@ void AES128_Parallel::decrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     printf("Decrypt kernel launcher: %d bytes, %d cipher blocks, %d threads, %d cipher blocks per thread\n", len, block_num, threads, blocks_per_thread);
     dim3 dimBlock(512, 1);
     dim3 dimGrid((threads + 511) / 512, 1, 1);
+
+    // timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
 
     // T-table and round key
     int *inv_T0_d, *inv_T1_d, *inv_T2_d, *inv_T3_d;
@@ -637,8 +657,8 @@ void AES128_Parallel::decrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     cudaMemcpy(key_dec_d, key_dec, sizeof(key_dec), cudaMemcpyHostToDevice);
 
     // s-box
-    unsigned char *inv_sbox_d;
-    cudaMalloc((unsigned char **)&inv_sbox_d, sizeof(inv_sbox));
+    uchar *inv_sbox_d;
+    cudaMalloc((uchar **)&inv_sbox_d, sizeof(inv_sbox));
     cudaMemcpy(inv_sbox_d, inv_sbox, sizeof(inv_sbox), cudaMemcpyHostToDevice);
 
     // input and output
@@ -668,6 +688,13 @@ void AES128_Parallel::decrypt(int threads, OPTIMIZATION opt, uchar input[], ucha
     }
 
     cudaMemcpy(y_h, y_d, len, cudaMemcpyDeviceToHost);
+
+    // timing
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    return METRIC{milliseconds};
 }
 
 #pragma endregion

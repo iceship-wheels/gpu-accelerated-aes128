@@ -2,3 +2,10 @@
 - 11.4 start
 - 11.5 standard AES128 completed
 - 11.7 T-table optimization completed
+- 12.4 Parallel AES128 completed
+- 12.10 Parallel AES128 with shared memory and warp shuffle completed
+- 12.11 Experiment
+- 12.12 Profile
+
+# BUG
+- test.cpp No average by running multiple iterations. Segmentation fault when iterations > 1 (probably memory leak)

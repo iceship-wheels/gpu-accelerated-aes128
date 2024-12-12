@@ -17,6 +17,7 @@ Reference:
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <chrono>
 #include "AES128.h"
 #include "AES_Serial.h"
 
@@ -33,30 +34,42 @@ Assume column-major stored
 /*
 ECB block cipher mode (cipher is applied directly and indepentently to each block)
 */
-void AES128_Serial::encrypt(uchar input[], uchar output[], int len)
+METRIC AES128_Serial::encrypt(uchar input[], uchar output[], int len)
 {
     if (len % BLOCK_STATES != 0)
     {
         std::cerr << "[Error] Input size must be multiple of " << BLOCK_STATES << " bytes" << std::endl;
         exit(1);
     }
+
+    auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i += BLOCK_STATES)
     {
         encrypt_block(input + i, output + i);
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> elapsed = end - start;
+    METRIC metric = {elapsed.count() * 1000};
+    return metric;
 }
 
-void AES128_Serial::decrypt(uchar input[], uchar output[], int len)
+METRIC AES128_Serial::decrypt(uchar input[], uchar output[], int len)
 {
     if (len % BLOCK_STATES != 0)
     {
         std::cerr << "[Error] Input size must be multiple of " << BLOCK_STATES << " bytes" << std::endl;
         exit(1);
     }
+
+    auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i += BLOCK_STATES)
     {
         decrypt_block(input + i, output + i);
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> elapsed = end - start;
+    METRIC metric = {elapsed.count() * 1000};
+    return metric;
 }
 
 #pragma endregion

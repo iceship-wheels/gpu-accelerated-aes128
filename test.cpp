@@ -48,7 +48,7 @@ size_t read_file_malloc(uchar **ptr, const char *filename)
     return filesize;
 }
 
-bool compare_bytes(uchar *a, uchar *b, int len)
+bool compare_bytes(const uchar *a, const uchar *b, int len)
 {
     for (int i = 0; i < len; i++)
     {
@@ -154,6 +154,8 @@ void test_parallel_3()
 
 void test_large()
 {
+    int iterations = 1;
+
     // ciphers
     AES128_Serial_Std *serial_std_cipher;
     serial_std_cipher = new AES128_Serial_Std("1234567890123456");
@@ -163,16 +165,25 @@ void test_large()
     parallel_cipher = new AES128_Parallel("1234567890123456");
 
     // input files
-    std::vector<std::string> filenames = {"input/input_16384.txt", "input/input_65536.txt",
-                                          "input/input_262144.txt", "input/input_1048576.txt",
-                                          "input/input_4194304.txt", "input/input_16777216.txt",
-                                          "input/input_67108864.txt", "input/input_268435456.txt",
-                                          "input/input_1073741824.txt"};
+    std::vector<std::string> filenames;
+    for (int i = 10; i < 31; i += 2)
+    {
+        filenames.push_back("input/input_" + std::to_string(1 << i) + ".txt");
+    }
     uchar *plain_text, *cipher_text, *plain_text_dec;
 
+    METRIC enc, dec;
+    vector<float> cpu_std_enc, cpu_std_dec, cpu_fast_enc, cpu_fast_dec;
+    vector<float> gpu_all_global_enc, gpu_all_global_dec, gpu_all_shared_enc, gpu_all_shared_dec, gpu_warp_shuffle_enc, gpu_warp_shuffle_dec;
     for (int i = 0; i < filenames.size(); i++)
     {
-        printf("=======File %s=======\n", filenames[i].c_str());
+        printf("\n=======File %s=======\n", filenames[i].c_str());
+
+        // time of each iteration
+        vector<float> cpu_std_enc_iter, cpu_std_dec_iter, cpu_fast_enc_iter, cpu_fast_dec_iter;
+        vector<float> gpu_all_global_enc_iter, gpu_all_global_dec_iter, gpu_all_shared_enc_iter, gpu_all_shared_dec_iter, gpu_warp_shuffle_enc_iter, gpu_warp_shuffle_dec_iter;
+
+        // memory allocation
         size_t size = read_file_malloc(&plain_text, filenames[i].c_str());
         if (size == 0)
         {
@@ -182,33 +193,285 @@ void test_large()
         cipher_text = (uchar *)malloc(size);
         plain_text_dec = (uchar *)malloc(size);
 
-        if (size <= (1 << 23))
+        for (int j = 0; j < iterations; j++)
         {
-            serial_std_cipher->encrypt(plain_text, cipher_text, size);
-            serial_std_cipher->decrypt(cipher_text, plain_text_dec, size);
-            std::cout << "Serial (Std): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+            std::cout << "Iteration " << j << std::endl;
 
-            serial_fast_cipher->encrypt(plain_text, cipher_text, size);
-            serial_fast_cipher->decrypt(cipher_text, plain_text_dec, size);
-            std::cout << "Serial (Fast): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+            if (size <= (1 << 23))
+            {
+                enc = serial_std_cipher->encrypt(plain_text, cipher_text, size);
+                dec = serial_std_cipher->decrypt(cipher_text, plain_text_dec, size);
+                if (!compare_bytes(plain_text, plain_text_dec, size))
+                {
+                    cout << "Serial (Standard): Failed" << endl;
+                    break;
+                }
+                cpu_std_dec_iter.push_back(dec.milliseconds);
+                cpu_std_enc_iter.push_back(enc.milliseconds);
+            }
+
+            if (size <= (1 << 29))
+            {
+                enc = serial_fast_cipher->encrypt(plain_text, cipher_text, size);
+                dec = serial_fast_cipher->decrypt(cipher_text, plain_text_dec, size);
+                if (!compare_bytes(plain_text, plain_text_dec, size))
+                {
+                    cout << "Serial (Fast): Failed" << endl;
+                    break;
+                }
+                cpu_fast_dec_iter.push_back(dec.milliseconds);
+                cpu_fast_enc_iter.push_back(enc.milliseconds);
+            }
+
+            enc = parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_GLOBAL, plain_text, cipher_text, size);
+            dec = parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_GLOBAL, cipher_text, plain_text_dec, size);
+            if (!compare_bytes(plain_text, plain_text_dec, size))
+            {
+                cout << "Parallel (ALL GLOBAL): Failed" << endl;
+                break;
+            }
+            gpu_all_global_enc_iter.push_back(enc.milliseconds);
+            gpu_all_global_dec_iter.push_back(dec.milliseconds);
+
+            enc = parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_SHARED, plain_text, cipher_text, size);
+            dec = parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_SHARED, cipher_text, plain_text_dec, size);
+            if (!compare_bytes(plain_text, plain_text_dec, size))
+            {
+                cout << "Parallel (ALL SHARED): Failed" << endl;
+                break;
+            }
+            gpu_all_shared_enc_iter.push_back(enc.milliseconds);
+            gpu_all_shared_dec_iter.push_back(dec.milliseconds);
+
+            enc = parallel_cipher->encrypt(1024, OPTIMIZATION::WARP_SHUFFLE, plain_text, cipher_text, size);
+            dec = parallel_cipher->decrypt(1024, OPTIMIZATION::WARP_SHUFFLE, cipher_text, plain_text_dec, size);
+            if (!compare_bytes(plain_text, plain_text_dec, size))
+            {
+                cout << "Parallel (WARP SHUFFLE): Failed" << endl;
+                break;
+            }
+            gpu_warp_shuffle_enc_iter.push_back(enc.milliseconds);
+            gpu_warp_shuffle_dec_iter.push_back(dec.milliseconds);
         }
 
-        parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_GLOBAL, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_GLOBAL, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel (ALL GLOBAL): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        // free memory
+        free(plain_text);
+        free(cipher_text);
+        free(plain_text_dec);
 
-        parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_SHARED, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_SHARED, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel (ALL SHARED): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        // calculate average
+        if (cpu_std_enc_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < cpu_std_enc_iter.size(); j++)
+            {
+                sum += cpu_std_enc_iter[j];
+            }
+            cpu_std_enc.push_back(sum / cpu_std_enc_iter.size());
+        }
 
-        parallel_cipher->encrypt(1024, OPTIMIZATION::WARP_SHUFFLE, plain_text, cipher_text, size);
-        parallel_cipher->decrypt(1024, OPTIMIZATION::WARP_SHUFFLE, cipher_text, plain_text_dec, size);
-        std::cout << "Parallel (WARP SHUFFLE): " << (compare_bytes(plain_text, plain_text_dec, size) ? "Success" : "Failed") << std::endl;
+        if (cpu_std_dec_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < cpu_std_dec_iter.size(); j++)
+            {
+                sum += cpu_std_dec_iter[j];
+            }
+            cpu_std_dec.push_back(sum / cpu_std_dec_iter.size());
+        }
+
+        if (cpu_fast_enc_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < cpu_fast_enc_iter.size(); j++)
+            {
+                sum += cpu_fast_enc_iter[j];
+            }
+            cpu_fast_enc.push_back(sum / cpu_fast_enc_iter.size());
+        }
+
+        if (cpu_fast_dec_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < cpu_fast_dec_iter.size(); j++)
+            {
+                sum += cpu_fast_dec_iter[j];
+            }
+            cpu_fast_dec.push_back(sum / cpu_fast_dec_iter.size());
+        }
+
+        if (gpu_all_global_enc_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < gpu_all_global_enc_iter.size(); j++)
+            {
+                sum += gpu_all_global_enc_iter[j];
+            }
+            gpu_all_global_enc.push_back(sum / gpu_all_global_enc_iter.size());
+        }
+
+        if (gpu_all_global_dec_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < gpu_all_global_dec_iter.size(); j++)
+            {
+                sum += gpu_all_global_dec_iter[j];
+            }
+            gpu_all_global_dec.push_back(sum / gpu_all_global_dec_iter.size());
+        }
+
+        if (gpu_all_shared_enc_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < gpu_all_shared_enc_iter.size(); j++)
+            {
+                sum += gpu_all_shared_enc_iter[j];
+            }
+            gpu_all_shared_enc.push_back(sum / gpu_all_shared_enc_iter.size());
+        }
+
+        if (gpu_all_shared_dec_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < gpu_all_shared_dec_iter.size(); j++)
+            {
+                sum += gpu_all_shared_dec_iter[j];
+            }
+            gpu_all_shared_dec.push_back(sum / gpu_all_shared_dec_iter.size());
+        }
+
+        if (gpu_warp_shuffle_enc_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < gpu_warp_shuffle_enc_iter.size(); j++)
+            {
+                sum += gpu_warp_shuffle_enc_iter[j];
+            }
+            gpu_warp_shuffle_enc.push_back(sum / gpu_warp_shuffle_enc_iter.size());
+        }
+
+        if (gpu_warp_shuffle_dec_iter.size() > 0)
+        {
+            float sum = 0;
+            for (int j = 0; j < gpu_warp_shuffle_dec_iter.size(); j++)
+            {
+                sum += gpu_warp_shuffle_dec_iter[j];
+            }
+            gpu_warp_shuffle_dec.push_back(sum / gpu_warp_shuffle_dec_iter.size());
+        }
     }
 
-    free(plain_text);
-    free(cipher_text);
-    free(plain_text_dec);
+    // write results to JSON
+    FILE *fp = fopen("output/result.json", "w");
+    if (fp == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
+    fprintf(fp, "{\n");
+
+    fprintf(fp, "\"file_sizes\": [");
+    for (int i = 10; i < 31; i += 2)
+    {
+        fprintf(fp, "%d", 1 << i);
+        if (i != 30)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"cpu_std_enc\": [");
+    for (int i = 0; i < cpu_std_enc.size(); i++)
+    {
+        fprintf(fp, "%f", cpu_std_enc[i]);
+        if (i != cpu_std_enc.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"cpu_std_dec\": [");
+    for (int i = 0; i < cpu_std_dec.size(); i++)
+    {
+        fprintf(fp, "%f", cpu_std_dec[i]);
+        if (i != cpu_std_dec.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"cpu_fast_enc\": [");
+    for (int i = 0; i < cpu_fast_enc.size(); i++)
+    {
+        fprintf(fp, "%f", cpu_fast_enc[i]);
+        if (i != cpu_fast_enc.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"cpu_fast_dec\": [");
+    for (int i = 0; i < cpu_fast_dec.size(); i++)
+    {
+        fprintf(fp, "%f", cpu_fast_dec[i]);
+        if (i != cpu_fast_dec.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"gpu_all_global_enc\": [");
+    for (int i = 0; i < gpu_all_global_enc.size(); i++)
+    {
+        fprintf(fp, "%f", gpu_all_global_enc[i]);
+        if (i != gpu_all_global_enc.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"gpu_all_global_dec\": [");
+    for (int i = 0; i < gpu_all_global_dec.size(); i++)
+    {
+        fprintf(fp, "%f", gpu_all_global_dec[i]);
+        if (i != gpu_all_global_dec.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"gpu_all_shared_enc\": [");
+    for (int i = 0; i < gpu_all_shared_enc.size(); i++)
+    {
+        fprintf(fp, "%f", gpu_all_shared_enc[i]);
+        if (i != gpu_all_shared_enc.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"gpu_all_shared_dec\": [");
+    for (int i = 0; i < gpu_all_shared_dec.size(); i++)
+    {
+        fprintf(fp, "%f", gpu_all_shared_dec[i]);
+        if (i != gpu_all_shared_dec.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"gpu_warp_shuffle_enc\": [");
+    for (int i = 0; i < gpu_warp_shuffle_enc.size(); i++)
+    {
+        fprintf(fp, "%f", gpu_warp_shuffle_enc[i]);
+        if (i != gpu_warp_shuffle_enc.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "],\n");
+
+    fprintf(fp, "\"gpu_warp_shuffle_dec\": [");
+    for (int i = 0; i < gpu_warp_shuffle_dec.size(); i++)
+    {
+        fprintf(fp, "%f", gpu_warp_shuffle_dec[i]);
+        if (i != gpu_warp_shuffle_dec.size() - 1)
+            fprintf(fp, ", ");
+    }
+    fprintf(fp, "]\n");
+
+    fprintf(fp, "}\n");
+    fclose(fp);
+
     delete serial_std_cipher;
     delete serial_fast_cipher;
     delete parallel_cipher;
