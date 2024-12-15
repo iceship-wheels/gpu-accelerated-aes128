@@ -5,6 +5,7 @@ project (Accelerated_AES128 CUDA CXX)
 add_library(AES128 AES128.cpp)
 add_library(AES_Serial AES_Serial.cpp)
 add_library(AES_Parallel AES_Parallel.cpp AES_Parallel_kernel.cu)
+set_property(TARGET AES_Parallel PROPERTY CUDA_ARCHITECTURES 75)
 target_link_libraries(AES_Serial AES128)
 target_link_libraries(AES_Parallel AES128)
 

@@ -105,9 +105,9 @@ void test_parallel_1()
          << "=======Parallel AES128 (All Global)=======" << endl;
     cipher = new AES128_Parallel("1234567890123456");
     print_byte_hex((uchar *)plain_text, 16);
-    cipher->encrypt(32, OPTIMIZATION::ALL_GLOBAL, (uchar *)plain_text, (uchar *)cipher_text, 16);
+    cipher->encrypt(32, OPTIMIZATION::ALL_CONSTANT, (uchar *)plain_text, (uchar *)cipher_text, 16);
     print_byte_hex((uchar *)cipher_text, 16);
-    cipher->decrypt(32, OPTIMIZATION::ALL_GLOBAL, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
+    cipher->decrypt(32, OPTIMIZATION::ALL_CONSTANT, (uchar *)cipher_text, (uchar *)plain_text_dec, 16);
     print_byte_hex((uchar *)plain_text_dec, 16);
     delete cipher;
 }
@@ -174,14 +174,14 @@ void test_large()
 
     METRIC enc, dec;
     vector<float> cpu_std_enc, cpu_std_dec, cpu_fast_enc, cpu_fast_dec;
-    vector<float> gpu_all_global_enc, gpu_all_global_dec, gpu_all_shared_enc, gpu_all_shared_dec, gpu_warp_shuffle_enc, gpu_warp_shuffle_dec;
+    vector<float> gpu_all_constant_enc, gpu_all_constant_dec, gpu_all_shared_enc, gpu_all_shared_dec, gpu_warp_shuffle_enc, gpu_warp_shuffle_dec;
     for (int i = 0; i < filenames.size(); i++)
     {
         printf("\n=======File %s=======\n", filenames[i].c_str());
 
         // time of each iteration
         vector<float> cpu_std_enc_iter, cpu_std_dec_iter, cpu_fast_enc_iter, cpu_fast_dec_iter;
-        vector<float> gpu_all_global_enc_iter, gpu_all_global_dec_iter, gpu_all_shared_enc_iter, gpu_all_shared_dec_iter, gpu_warp_shuffle_enc_iter, gpu_warp_shuffle_dec_iter;
+        vector<float> gpu_all_constant_enc_iter, gpu_all_constant_dec_iter, gpu_all_shared_enc_iter, gpu_all_shared_dec_iter, gpu_warp_shuffle_enc_iter, gpu_warp_shuffle_dec_iter;
 
         // memory allocation
         size_t size = read_file_malloc(&plain_text, filenames[i].c_str());
@@ -223,15 +223,15 @@ void test_large()
                 cpu_fast_enc_iter.push_back(enc.milliseconds);
             }
 
-            enc = parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_GLOBAL, plain_text, cipher_text, size);
-            dec = parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_GLOBAL, cipher_text, plain_text_dec, size);
+            enc = parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_CONSTANT, plain_text, cipher_text, size);
+            dec = parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_CONSTANT, cipher_text, plain_text_dec, size);
             if (!compare_bytes(plain_text, plain_text_dec, size))
             {
-                cout << "Parallel (ALL GLOBAL): Failed" << endl;
+                cout << "Parallel (ALL CONSTANT): Failed" << endl;
                 break;
             }
-            gpu_all_global_enc_iter.push_back(enc.milliseconds);
-            gpu_all_global_dec_iter.push_back(dec.milliseconds);
+            gpu_all_constant_enc_iter.push_back(enc.milliseconds);
+            gpu_all_constant_dec_iter.push_back(dec.milliseconds);
 
             enc = parallel_cipher->encrypt(1024, OPTIMIZATION::ALL_SHARED, plain_text, cipher_text, size);
             dec = parallel_cipher->decrypt(1024, OPTIMIZATION::ALL_SHARED, cipher_text, plain_text_dec, size);
@@ -300,24 +300,24 @@ void test_large()
             cpu_fast_dec.push_back(sum / cpu_fast_dec_iter.size());
         }
 
-        if (gpu_all_global_enc_iter.size() > 0)
+        if (gpu_all_constant_enc_iter.size() > 0)
         {
             float sum = 0;
-            for (int j = 0; j < gpu_all_global_enc_iter.size(); j++)
+            for (int j = 0; j < gpu_all_constant_enc_iter.size(); j++)
             {
-                sum += gpu_all_global_enc_iter[j];
+                sum += gpu_all_constant_enc_iter[j];
             }
-            gpu_all_global_enc.push_back(sum / gpu_all_global_enc_iter.size());
+            gpu_all_constant_enc.push_back(sum / gpu_all_constant_enc_iter.size());
         }
 
-        if (gpu_all_global_dec_iter.size() > 0)
+        if (gpu_all_constant_dec_iter.size() > 0)
         {
             float sum = 0;
-            for (int j = 0; j < gpu_all_global_dec_iter.size(); j++)
+            for (int j = 0; j < gpu_all_constant_dec_iter.size(); j++)
             {
-                sum += gpu_all_global_dec_iter[j];
+                sum += gpu_all_constant_dec_iter[j];
             }
-            gpu_all_global_dec.push_back(sum / gpu_all_global_dec_iter.size());
+            gpu_all_constant_dec.push_back(sum / gpu_all_constant_dec_iter.size());
         }
 
         if (gpu_all_shared_enc_iter.size() > 0)
@@ -415,20 +415,20 @@ void test_large()
     }
     fprintf(fp, "],\n");
 
-    fprintf(fp, "\"gpu_all_global_enc\": [");
-    for (int i = 0; i < gpu_all_global_enc.size(); i++)
+    fprintf(fp, "\"gpu_all_constant_enc\": [");
+    for (int i = 0; i < gpu_all_constant_enc.size(); i++)
     {
-        fprintf(fp, "%f", gpu_all_global_enc[i]);
-        if (i != gpu_all_global_enc.size() - 1)
+        fprintf(fp, "%f", gpu_all_constant_enc[i]);
+        if (i != gpu_all_constant_enc.size() - 1)
             fprintf(fp, ", ");
     }
     fprintf(fp, "],\n");
 
-    fprintf(fp, "\"gpu_all_global_dec\": [");
-    for (int i = 0; i < gpu_all_global_dec.size(); i++)
+    fprintf(fp, "\"gpu_all_constant_dec\": [");
+    for (int i = 0; i < gpu_all_constant_dec.size(); i++)
     {
-        fprintf(fp, "%f", gpu_all_global_dec[i]);
-        if (i != gpu_all_global_dec.size() - 1)
+        fprintf(fp, "%f", gpu_all_constant_dec[i]);
+        if (i != gpu_all_constant_dec.size() - 1)
             fprintf(fp, ", ");
     }
     fprintf(fp, "],\n");

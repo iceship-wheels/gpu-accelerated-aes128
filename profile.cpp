@@ -54,7 +54,7 @@ void profile_gpu(OPTIMIZATION opt)
     cipher = new AES128_Parallel("1234567890123456");
 
     uchar *plain_text, *cipher_text, *plain_text_dec;
-    std::string filename = "input/input_1073741824.txt";
+    std::string filename = "input/input_268435456.txt";
     size_t size = read_file_malloc(&plain_text, filename.c_str());
     if (size == 0)
     {
@@ -74,7 +74,7 @@ void profile_gpu(OPTIMIZATION opt)
 
 int main(int argc, char *argv[])
 {
-    // profile_gpu(OPTIMIZATION::ALL_GLOBAL);
+    // profile_gpu(OPTIMIZATION::ALL_CONSTANT);
     // profile_gpu(OPTIMIZATION::ALL_SHARED);
     profile_gpu(OPTIMIZATION::WARP_SHUFFLE);
     return 0;

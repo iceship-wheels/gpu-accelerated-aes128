@@ -16,7 +16,7 @@ Date Created: 2024/11/4
 
 enum OPTIMIZATION
 {
-    ALL_GLOBAL = 0,
+    ALL_CONSTANT = 0,
     ALL_SHARED = 1,
     WARP_SHUFFLE = 2
 };
