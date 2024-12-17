@@ -7,6 +7,13 @@
 - 12.11 Experiment
 - 12.12 Profile
 
+# Usage
+
+Run compile.sh in project root directory to build the project (this will create two exe files: `test` and `profile`)
+Run `test` to get results
+Use ncu to profile `profile` to get performance data
+
+
 # BUG
 - test.cpp No average by running multiple iterations. Segmentation fault when iterations > 1 (probably memory leak)
 
