@@ -9,8 +9,9 @@
 
 # Usage
 
+Run `generator.py` to generate test data in the input folder.
 Run compile.sh in project root directory to build the project (this will create two exe files: `test` and `profile`)
-Run `test` to get results
+Run `test` to get results in the output folder.
 Use ncu to profile `profile` to get performance data
 
 
